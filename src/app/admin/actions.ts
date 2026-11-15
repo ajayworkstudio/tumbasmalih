@@ -223,3 +223,27 @@ export async function createUploadTicket(bucket: "produk" | "ebooks", fileName: 
     publicUrl: bucket === "produk" ? storage.getPublicUrl(data.path).data.publicUrl : undefined,
   };
 }
+
+export type LoginState = { error?: string; email?: string };
+
+/** Login lewat server action: tetap jalan walau JavaScript gagal dimuat, dan password tidak pernah masuk URL. */
+export async function signIn(_prev: LoginState, formData: FormData): Promise<LoginState> {
+  const email = text(formData, "email", 150).toLowerCase();
+  const password = typeof formData.get("password") === "string" ? (formData.get("password") as string) : "";
+  if (!email || !password) return { error: "Isi email dan password.", email };
+
+  const supabase = await createSessionClient();
+  const { error } = await supabase.auth.signInWithPassword({ email, password });
+  if (error) {
+    const msg = /confirm/i.test(error.message)
+      ? "Email admin belum dikonfirmasi. Di Supabase › Authentication › Users, buat ulang user dengan Auto Confirm User dicentang."
+      : "Email atau password salah.";
+    return { error: msg, email };
+  }
+  const allowed = (process.env.ADMIN_EMAILS ?? "").split(",").map((e) => e.trim().toLowerCase());
+  if (!allowed.includes(email)) {
+    await supabase.auth.signOut();
+    return { error: "Akun ini belum terdaftar sebagai admin. Tambahkan emailnya ke ADMIN_EMAILS di env, lalu restart server.", email };
+  }
+  redirect("/admin");
+}

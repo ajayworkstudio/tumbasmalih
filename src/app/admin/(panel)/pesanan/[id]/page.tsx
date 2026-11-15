@@ -37,7 +37,7 @@ async function OrderDetail({ params, searchParams }: PageProps<"/admin/pesanan/[
 
   return (
     <div className="flex flex-col gap-5">
-      <Link href="/admin" className="text-sm font-semibold text-brand hover:underline">← Semua pesanan</Link>
+      <Link href="/admin/pesanan" className="inline-flex min-h-11 items-center text-sm font-semibold text-brand hover:underline">Semua pesanan</Link>
       <div className="flex flex-wrap items-center gap-3">
         <h1 className="text-2xl font-extrabold">{order.code}</h1>
         <StatusBadge status={order.status} />

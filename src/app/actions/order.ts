@@ -3,7 +3,7 @@
 import { randomInt } from "node:crypto";
 import { redirect } from "next/navigation";
 import { normalizePhone } from "@/lib/format";
-import { shippingFlat } from "@/lib/site";
+import { getSettings } from "@/lib/settings";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { PaymentMethod, ProductType } from "@/lib/types";
 
@@ -111,7 +111,7 @@ export async function createOrder(_prev: CheckoutState, formData: FormData): Pro
   if (Object.keys(fieldErrors).length > 0) return { fieldErrors, values };
 
   const subtotal = lines.reduce((n, l) => n + l.line_total, 0);
-  const shippingFee = hasPhysical ? shippingFlat() : 0;
+  const shippingFee = hasPhysical ? (await getSettings()).shippingFlat : 0;
 
   let orderId: string | null = null;
   let code = "";

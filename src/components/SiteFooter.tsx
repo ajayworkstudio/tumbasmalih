@@ -1,10 +1,12 @@
 import Link from "next/link";
+import { getSettings } from "@/lib/settings";
 import { site, waLink } from "@/lib/site";
 import { Logo } from "./Logo";
 
 const linkCls = "flex min-h-11 items-center hover:text-white hover:underline";
 
-export function SiteFooter() {
+export async function SiteFooter() {
+  const settings = await getSettings();
   return (
     <footer className="on-dark mt-16 bg-navy text-[#C9D3EA]">
       <div className="mx-auto flex max-w-310 flex-wrap justify-between gap-x-16 gap-y-8 px-6 py-11 pb-32 md:pb-11">
@@ -24,7 +26,8 @@ export function SiteFooter() {
             <h2 className="mb-1 font-bold text-white">Bantuan</h2>
             <Link href="/cara-belanja" className={linkCls}>Cara belanja</Link>
             <Link href="/cara-belanja#pengiriman" className={linkCls}>Pengiriman dan retur</Link>
-            <a href={waLink(`Halo ${site.name}, saya mau tanya.`)} target="_blank" rel="noopener" className={`${linkCls} font-bold text-accent`}>
+            <Link href="/admin" className={linkCls}>Masuk admin</Link>
+            <a href={waLink(`Halo ${site.name}, saya mau tanya.`, settings.whatsapp)} target="_blank" rel="noopener" className={`${linkCls} font-bold text-accent`}>
               Chat admin di WhatsApp
             </a>
           </div>

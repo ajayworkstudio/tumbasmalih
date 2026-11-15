@@ -88,6 +88,23 @@ drop trigger if exists products_updated_at on public.products;
 create trigger products_updated_at before update on public.products
   for each row execute function public.set_updated_at();
 
+create table if not exists public.settings (
+  id integer primary key default 1 check (id = 1),  -- hanya satu baris
+  whatsapp text not null default '',                 -- format 62xxxxxxxxxx
+  bank_accounts jsonb not null default '[]',         -- [{"bank","number","holder"}]
+  qris_image_url text not null default '',
+  shipping_flat integer not null default 15000 check (shipping_flat >= 0),
+  policy_shipping text not null default '',
+  policy_returns text not null default '',
+  policy_ebook text not null default '',
+  updated_at timestamptz not null default now()
+);
+insert into public.settings (id) values (1) on conflict (id) do nothing;
+
+drop trigger if exists settings_updated_at on public.settings;
+create trigger settings_updated_at before update on public.settings
+  for each row execute function public.set_updated_at();
+
 drop trigger if exists orders_updated_at on public.orders;
 create trigger orders_updated_at before update on public.orders
   for each row execute function public.set_updated_at();
@@ -98,6 +115,7 @@ alter table public.categories enable row level security;
 alter table public.products enable row level security;
 alter table public.orders enable row level security;
 alter table public.order_items enable row level security;
+alter table public.settings enable row level security;
 
 drop policy if exists "kategori publik" on public.categories;
 create policy "kategori publik" on public.categories
@@ -106,6 +124,13 @@ create policy "kategori publik" on public.categories
 drop policy if exists "produk aktif publik" on public.products;
 create policy "produk aktif publik" on public.products
   for select to anon, authenticated using (is_active);
+
+-- Pengaturan toko (WA, rekening, kebijakan) memang ditampilkan ke pembeli, jadi boleh dibaca publik.
+drop policy if exists "pengaturan publik" on public.settings;
+create policy "pengaturan publik" on public.settings
+  for select to anon, authenticated using (true);
+
+grant select on public.categories, public.settings to anon, authenticated;
 
 -- Sembunyikan kolom internal (harga modal, link sumber, path file ebook) dari publik.
 revoke select on public.products from anon, authenticated;

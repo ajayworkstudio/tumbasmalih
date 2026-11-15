@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { AddToCartButton } from "@/components/AddToCartButton";
+import { AdminShortcut } from "@/components/AdminShortcut";
 import { Icon } from "@/components/Icon";
 import { ProductGrid, productTag } from "@/components/ProductCard";
 import { ProductImage } from "@/components/ProductImage";
@@ -10,7 +11,8 @@ import { BlockSkeleton } from "@/components/Skeleton";
 import { TrackEvent } from "@/components/TrackEvent";
 import { getCategories, getProductBySlug, getProducts } from "@/lib/data";
 import { formatRupiah } from "@/lib/format";
-import { policy, site } from "@/lib/site";
+import { getSettings } from "@/lib/settings";
+import { site } from "@/lib/site";
 
 export async function generateMetadata({ params }: PageProps<"/produk/[slug]">): Promise<Metadata> {
   const { slug } = await params;
@@ -30,9 +32,10 @@ async function ProductDetail({ params }: { params: PageProps<"/produk/[slug]">["
   const product = await getProductBySlug(slug);
   if (!product) notFound();
 
-  const [categories, related] = await Promise.all([
+  const [categories, related, settings] = await Promise.all([
     getCategories(),
     product.category_id ? getProducts({ categoryId: product.category_id, limit: 5 }) : Promise.resolve([]),
+    getSettings(),
   ]);
   const category = categories.find((c) => c.id === product.category_id);
   const isEbook = product.type === "ebook";
@@ -99,7 +102,7 @@ async function ProductDetail({ params }: { params: PageProps<"/produk/[slug]">["
               </>
             ) : (
               <>
-                <p className="flex items-start gap-2"><Icon name="truck" size={18} className="mt-0.5 shrink-0 text-brand" /> Estimasi pengiriman: {policy.shippingTime || "[ISI ESTIMASI PENGIRIMAN]"}</p>
+                <p className="flex items-start gap-2"><Icon name="truck" size={18} className="mt-0.5 shrink-0 text-brand" /> Estimasi pengiriman: {settings.policyShipping || "[ISI ESTIMASI PENGIRIMAN]"}</p>
                 <p className="flex items-start gap-2"><Icon name="check" size={18} className="mt-0.5 shrink-0 text-brand" /> Bisa bayar di tempat (COD).</p>
               </>
             )}
@@ -113,6 +116,7 @@ async function ProductDetail({ params }: { params: PageProps<"/produk/[slug]">["
           <div className="mt-2 flex gap-3">
             <AddToCartButton product={product} variant="full" />
           </div>
+          <AdminShortcut href={`/admin/produk/${product.id}`} label="Edit produk ini (admin)" />
         </div>
       </div>
 

@@ -15,8 +15,11 @@ Ebook bisa diunduh dari halaman pesanan setelah pembayaran dikonfirmasi.
 | `/produk/[slug]` | Detail produk + data terstruktur (JSON-LD) untuk Google |
 | `/keranjang`, `/checkout` | Keranjang (tersimpan di browser) & checkout |
 | `/pesanan/[kode]` | Status pesanan, instruksi bayar, tombol WA, unduh ebook |
-| `/admin` | Login admin, daftar & detail pesanan, ubah status/resi |
-| `/admin/produk` | Tambah/edit produk, harga modal, link sumber marketplace |
+| `/admin` | Ringkasan: pesanan yang perlu tindakan, omzet bulan ini, stok hampir habis |
+| `/admin/pesanan` | Daftar & detail pesanan, ubah status/resi, link sumber marketplace |
+| `/admin/produk` | Tambah/edit produk, upload foto & file ebook langsung, harga modal |
+| `/admin/kategori` | Tambah, ubah, hapus kategori |
+| `/admin/pengaturan` | Nomor WhatsApp, rekening, gambar QRIS, ongkir flat, kebijakan toko |
 
 Lainnya: `sitemap.xml`, `robots.txt`, metadata SEO per halaman, Meta Pixel
 (PageView, ViewContent, AddToCart, InitiateCheckout, Purchase).
@@ -26,7 +29,7 @@ Lainnya: `sitemap.xml`, `robots.txt`, metadata SEO per halaman, Meta Pixel
 ### 1. Siapkan Supabase
 1. Buat project baru di [supabase.com](https://supabase.com) (region Singapore).
 2. **SQL Editor** → jalankan isi `supabase/schema.sql`, lalu `supabase/seed.sql` (kategori awal). Produk ditambahkan dari `/admin/produk`.
-3. **Authentication › Users** → *Add user* → buat akun admin (email + password).
+3. **Authentication › Users** → *Add user* → *Create new user* → isi email admin dan password, centang *Auto Confirm User*. Email yang sama dimasukkan ke env `ADMIN_EMAILS`.
 4. **Project Settings › API** → salin URL, anon/publishable key, dan service_role/secret key.
 
 ### 2. Jalankan di komputer
@@ -46,7 +49,7 @@ npm run dev                  # buka http://localhost:3000
 
 Arahan visual ada di `DESIGN.md`. Kode diaudit dengan aturan [anti-slop](https://github.com/miqdadbadjuber/anti-slop); laporannya ada di folder `anti-slop/`.
 
-Isi kebijakan toko di env `NEXT_PUBLIC_POLICY_SHIPPING`, `NEXT_PUBLIC_POLICY_RETURNS`, dan `NEXT_PUBLIC_POLICY_EBOOK`. Selama kosong, halaman menampilkan placeholder `[ISI ...]` supaya tidak ada janji yang dikarang.
+Nomor WhatsApp, rekening, QRIS, ongkir, dan kebijakan toko diisi dari `/admin/pengaturan`. Selama kebijakan kosong, halaman menampilkan placeholder `[ISI ...]` supaya tidak ada janji yang dikarang.
 
 ## Alur kerja harian admin
 
@@ -57,10 +60,13 @@ Isi kebijakan toko di env `NEXT_PUBLIC_POLICY_SHIPPING`, `NEXT_PUBLIC_POLICY_RET
    lalu isi nomor resi & ubah status ke *Dikirim*.
 4. **COD:** status awal *Menunggu konfirmasi*; konfirmasi ke pembeli via WA, lalu proses seperti barang fisik.
 
+### Masuk admin
+- Buka `/admin` atau tautan **Masuk admin** di footer toko.
+- Selama login, halaman produk di toko menampilkan tombol **Edit produk ini (admin)**.
+
 ### Menambah produk
-- **Gambar:** unggah ke Storage bucket `produk` (publik), salin *public URL* ke kolom URL gambar.
-- **File ebook:** unggah PDF ke bucket `ebooks` (privat), tulis path-nya (mis. `hemat-anak-kos.pdf`) di form produk.
-  Link unduh dibuat sementara (10 menit) dan hanya untuk pesanan yang sudah dibayar.
+- Foto dan file ebook diunggah langsung dari form produk. Foto masuk bucket publik `produk`, ebook masuk bucket privat `ebooks`.
+- Link unduh ebook dibuat sementara (10 menit) dan hanya untuk pesanan yang sudah dibayar.
 - Kolom **harga modal** dan **link sumber** hanya terlihat di admin (dikunci di level database).
 
 ## Catatan keamanan
@@ -71,5 +77,5 @@ Isi kebijakan toko di env `NEXT_PUBLIC_POLICY_SHIPPING`, `NEXT_PUBLIC_POLICY_RET
 ## Belum ada (rencana fase 2)
 - Payment gateway otomatis (Midtrans/Xendit) supaya status *dibayar* & pengiriman ebook otomatis
 - Ongkir real-time per kota (RajaOngkir / Biteship); sekarang masih flat `SHIPPING_FLAT`
-- Pengurangan stok otomatis, notifikasi WA/email otomatis, upload gambar langsung dari admin
+- Pengurangan stok otomatis, notifikasi WA/email otomatis
 - Pembatasan spam di checkout (captcha / rate limit)

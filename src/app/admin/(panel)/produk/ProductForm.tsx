@@ -2,6 +2,7 @@
 import { startTransition, useActionState, useState } from "react";
 import type { AdminProduct, Category } from "@/lib/types";
 import { saveProduct, type ProductFormState } from "../../actions";
+import { Uploader } from "../Uploader";
 
 const input = "h-11 rounded-lg border border-field bg-white px-3 text-sm";
 const label = "flex flex-col gap-1.5 text-sm font-semibold";
@@ -40,17 +41,21 @@ export function ProductForm({ product, categories }: { product?: AdminProduct; c
           Deskripsi
           <textarea name="description" rows={6} defaultValue={dv("description", product?.description)} className="rounded-lg border border-field px-3 py-2.5 text-sm" />
         </label>
-        <label className={label}>
-          URL gambar
-          <input name="image_url" type="url" defaultValue={dv("image_url", product?.image_url)} placeholder="https://…" className={input} />
-          <span className={hint}>Unggah gambar ke Supabase Storage bucket “produk”, lalu salin public URL-nya ke sini.</span>
-        </label>
+        <Uploader
+          bucket="produk"
+          name="image_url"
+          label="Foto produk"
+          hint="JPG, PNG, atau WEBP. Foto persegi paling rapi di kartu produk."
+          defaultValue={String(dv("image_url", product?.image_url))}
+        />
         {type === "ebook" ? (
-          <label className={label}>
-            Path file ebook
-            <input name="file_path" defaultValue={dv("file_path", product?.file_path)} placeholder="contoh: hemat-anak-kos.pdf" className={input} />
-            <span className={hint}>Unggah PDF ke bucket privat “ebooks” di Supabase Storage, lalu tulis nama/path file-nya di sini.</span>
-          </label>
+          <Uploader
+            bucket="ebooks"
+            name="file_path"
+            label="File ebook"
+            hint="PDF atau EPUB. Disimpan privat; pembeli hanya bisa mengunduh setelah pesanan ditandai dibayar."
+            defaultValue={String(dv("file_path", product?.file_path))}
+          />
         ) : (
           <label className={label}>
             Link sumber (marketplace)

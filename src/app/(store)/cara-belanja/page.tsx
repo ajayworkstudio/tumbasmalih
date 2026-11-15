@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import { policy, site, waLink } from "@/lib/site";
+import { getSettings } from "@/lib/settings";
+import { site, waLink } from "@/lib/site";
 
 export const metadata: Metadata = {
   title: "Cara belanja",
@@ -16,7 +17,8 @@ const steps = [
   ["Terima pesanan", "Ebook diunduh dari halaman pesanan. Barang fisik dikirim, dan nomor resinya muncul di halaman yang sama."],
 ];
 
-export default function HowToBuyPage() {
+export default async function HowToBuyPage() {
+  const settings = await getSettings();
   return (
     <article className="mx-auto flex max-w-180 flex-col gap-8">
       <h1 className="text-2xl font-extrabold md:text-4xl">Cara belanja di {site.name}</h1>
@@ -36,19 +38,19 @@ export default function HowToBuyPage() {
         <dl className="flex flex-col gap-3 text-sm leading-relaxed">
           <div>
             <dt className="font-bold">Estimasi pengiriman</dt>
-            <dd className="text-[#374151]">{policy.shippingTime || "[ISI ESTIMASI PENGIRIMAN]"}</dd>
+            <dd className="text-[#374151]">{settings.policyShipping || "[ISI ESTIMASI PENGIRIMAN]"}</dd>
           </div>
           <div>
             <dt className="font-bold">Retur barang fisik</dt>
-            <dd className="text-[#374151]">{policy.returns || "[ISI KEBIJAKAN RETUR]"}</dd>
+            <dd className="text-[#374151]">{settings.policyReturns || "[ISI KEBIJAKAN RETUR]"}</dd>
           </div>
           <div>
             <dt className="font-bold">Ebook</dt>
-            <dd className="text-[#374151]">{policy.ebookRefund || "[ISI KEBIJAKAN PENGEMBALIAN EBOOK]"}</dd>
+            <dd className="text-[#374151]">{settings.policyEbook || "[ISI KEBIJAKAN PENGEMBALIAN EBOOK]"}</dd>
           </div>
         </dl>
         <a
-          href={waLink(`Halo ${site.name}, saya mau tanya soal pesanan.`)}
+          href={waLink(`Halo ${site.name}, saya mau tanya soal pesanan.`, settings.whatsapp)}
           target="_blank"
           rel="noopener"
           className="flex min-h-11 items-center self-start font-bold text-brand hover:underline"

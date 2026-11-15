@@ -1,9 +1,10 @@
 "use server";
 
+import { randomUUID } from "node:crypto";
 import { updateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireAdmin } from "@/lib/auth";
-import { slugify } from "@/lib/format";
+import { normalizePhone, slugify } from "@/lib/format";
 import { statusOrder } from "@/lib/site";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createSessionClient } from "@/lib/supabase/server";
@@ -108,4 +109,117 @@ export async function saveProduct(_prev: ProductFormState, formData: FormData): 
 
   updateTag("catalog");
   redirect("/admin/produk?disimpan=1");
+}
+
+export type FormState = { error?: string; ok?: boolean };
+
+export async function saveSettings(_prev: FormState, formData: FormData): Promise<FormState> {
+  await requireAdmin();
+  const whatsappRaw = text(formData, "whatsapp", 30);
+  const whatsapp = normalizePhone(whatsappRaw);
+  if (whatsappRaw && !whatsapp) return { error: "Nomor WhatsApp tidak valid. Contoh: 081234567890." };
+
+  const shipping = intOrNull(formData, "shipping_flat");
+  if (shipping === null || shipping === "invalid") return { error: "Ongkir flat wajib angka bulat (contoh: 15000)." };
+
+  const banks = [0, 1, 2]
+    .map((i) => ({
+      bank: text(formData, `bank_${i}`, 40),
+      number: text(formData, `number_${i}`, 40),
+      holder: text(formData, `holder_${i}`, 80),
+    }))
+    .filter((b) => b.bank || b.number || b.holder);
+  if (banks.some((b) => !b.bank || !b.number || !b.holder)) {
+    return { error: "Setiap rekening perlu nama bank, nomor, dan nama pemilik. Kosongkan baris yang tidak dipakai." };
+  }
+
+  const { error } = await createAdminClient()
+    .from("settings")
+    .upsert({
+      id: 1,
+      whatsapp: whatsapp ?? "",
+      bank_accounts: banks,
+      qris_image_url: text(formData, "qris_image_url", 500),
+      shipping_flat: shipping,
+      policy_shipping: text(formData, "policy_shipping", 500),
+      policy_returns: text(formData, "policy_returns", 1500),
+      policy_ebook: text(formData, "policy_ebook", 1000),
+    });
+  if (error) {
+    console.error("saveSettings:", error.message);
+    return { error: "Gagal menyimpan pengaturan." };
+  }
+  updateTag("settings");
+  return { ok: true };
+}
+
+const CATEGORY_ICONS = ["book", "home", "key", "phone", "shirt", "gift", "bag"];
+
+export async function saveCategory(_prev: FormState, formData: FormData): Promise<FormState> {
+  await requireAdmin();
+  const id = text(formData, "id", 40);
+  const name = text(formData, "name", 60);
+  const slug = slugify(text(formData, "slug", 60) || name);
+  const icon = text(formData, "icon", 20);
+  const sort = intOrNull(formData, "sort");
+  if (name.length < 2) return { error: "Nama kategori minimal 2 karakter." };
+  if (!slug) return { error: "Slug tidak valid." };
+  if (!CATEGORY_ICONS.includes(icon)) return { error: "Pilih ikon dari daftar." };
+  if (sort === "invalid") return { error: "Urutan harus angka bulat." };
+
+  const supabase = createAdminClient();
+  const row = { name, slug, icon, sort: sort ?? 0 };
+  const { error } = id
+    ? await supabase.from("categories").update(row).eq("id", id)
+    : await supabase.from("categories").insert(row);
+  if (error) {
+    if (error.code === "23505") return { error: `Slug "${slug}" sudah dipakai kategori lain.` };
+    console.error("saveCategory:", error.message);
+    return { error: "Gagal menyimpan kategori." };
+  }
+  updateTag("catalog");
+  return { ok: true };
+}
+
+export async function deleteCategory(formData: FormData) {
+  await requireAdmin();
+  const id = text(formData, "id", 40);
+  if (!/^[0-9a-f-]{36}$/i.test(id)) return;
+  const { error } = await createAdminClient().from("categories").delete().eq("id", id);
+  if (error) console.error("deleteCategory:", error.message);
+  updateTag("catalog");
+  redirect("/admin/kategori?dihapus=1");
+}
+
+const UPLOAD_RULES = {
+  produk: { exts: ["jpg", "jpeg", "png", "webp"], label: "gambar JPG, PNG, atau WEBP" },
+  ebooks: { exts: ["pdf", "epub"], label: "file PDF atau EPUB" },
+} as const;
+
+export type UploadTicket = { error?: string; path?: string; token?: string; publicUrl?: string };
+
+/**
+ * Membuat link upload sekali pakai ke Supabase Storage. File dikirim langsung dari browser
+ * ke Storage, jadi ukuran file tidak dibatasi batas body server action atau Vercel.
+ */
+export async function createUploadTicket(bucket: "produk" | "ebooks", fileName: string): Promise<UploadTicket> {
+  await requireAdmin();
+  const rule = UPLOAD_RULES[bucket];
+  if (!rule) return { error: "Bucket tidak dikenal." };
+  const ext = fileName.split(".").pop()?.toLowerCase() ?? "";
+  if (!(rule.exts as readonly string[]).includes(ext)) return { error: `Pilih ${rule.label}.` };
+
+  const base = slugify(fileName.replace(/\.[^.]+$/, "")) || "file";
+  const path = `${new Date().toISOString().slice(0, 10)}/${base}-${randomUUID().slice(0, 8)}.${ext}`;
+  const storage = createAdminClient().storage.from(bucket);
+  const { data, error } = await storage.createSignedUploadUrl(path);
+  if (error || !data) {
+    console.error("createUploadTicket:", error?.message);
+    return { error: "Gagal menyiapkan upload. Pastikan bucket sudah dibuat dari schema.sql." };
+  }
+  return {
+    path: data.path,
+    token: data.token,
+    publicUrl: bucket === "produk" ? storage.getPublicUrl(data.path).data.publicUrl : undefined,
+  };
 }

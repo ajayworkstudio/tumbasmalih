@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { shippingFlat } from "@/lib/site";
+import { getSettings } from "@/lib/settings";
 import { CheckoutForm } from "./CheckoutForm";
 
 export const metadata: Metadata = {
@@ -7,6 +7,7 @@ export const metadata: Metadata = {
   robots: { index: false },
 };
 
-export default function CheckoutPage() {
-  return <CheckoutForm shippingFee={shippingFlat()} />;
+export default async function CheckoutPage() {
+  const { shippingFlat } = await getSettings();
+  return <CheckoutForm shippingFee={shippingFlat} />;
 }

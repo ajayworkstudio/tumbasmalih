@@ -4,7 +4,8 @@ import { Suspense } from "react";
 import { Icon } from "@/components/Icon";
 import { BlockSkeleton } from "@/components/Skeleton";
 import { formatDate, formatRupiah } from "@/lib/format";
-import { bankAccounts, paymentLabels, site, statusLabels, waLink } from "@/lib/site";
+import { getSettings } from "@/lib/settings";
+import { paymentLabels, site, statusLabels, waLink } from "@/lib/site";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { Order, OrderItem, OrderStatus } from "@/lib/types";
 import { NewOrderEffects } from "./NewOrderEffects";
@@ -33,7 +34,8 @@ async function OrderView({ params, searchParams }: PageProps<"/pesanan/[kode]">)
 
   const isPaid = PAID.includes(order.status);
   const awaitingPayment = order.status === "menunggu_pembayaran";
-  const banks = bankAccounts();
+  const settings = await getSettings();
+  const banks = settings.bankAccounts;
   const confirmMsg = awaitingPayment
     ? `Halo ${site.name}, saya sudah bayar pesanan ${order.code} sebesar ${formatRupiah(order.total)} via ${paymentLabels[order.payment_method]}. Berikut bukti transfernya.`
     : `Halo ${site.name}, saya mau tanya pesanan ${order.code}.`;
@@ -59,8 +61,8 @@ async function OrderView({ params, searchParams }: PageProps<"/pesanan/[kode]">)
             Bayar tepat <strong className="text-ink">{formatRupiah(order.total)}</strong>, lalu kirim bukti bayar lewat WhatsApp.
           </p>
           {order.payment_method === "qris" &&
-            (site.qrisImageUrl ? (
-              <img src={site.qrisImageUrl} alt="Kode QRIS tumbasmalih" width={280} height={280} className="mx-auto aspect-square w-full max-w-70 rounded-2xl border border-line object-contain" />
+            (settings.qrisImageUrl ? (
+              <img src={settings.qrisImageUrl} alt="Kode QRIS tumbasmalih" width={280} height={280} className="mx-auto aspect-square w-full max-w-70 rounded-2xl border border-line object-contain" />
             ) : (
               <p className="rounded-xl bg-ground p-4 text-sm text-muted">Kode QRIS akan dikirim admin lewat WhatsApp.</p>
             ))}
@@ -138,7 +140,7 @@ async function OrderView({ params, searchParams }: PageProps<"/pesanan/[kode]">)
       </section>
 
       <a
-        href={waLink(confirmMsg)}
+        href={waLink(confirmMsg, settings.whatsapp)}
         target="_blank"
         rel="noopener"
         className="flex h-13 items-center justify-center gap-2 rounded-xl bg-wa font-bold text-white hover:bg-[#0f5f30]"

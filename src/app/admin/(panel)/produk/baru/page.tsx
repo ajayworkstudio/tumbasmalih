@@ -13,7 +13,7 @@ async function NewProduct() {
   const { data } = await createAdminClient().from("categories").select("*").order("sort");
   return (
     <div className="flex flex-col gap-5">
-      <Link href="/admin/produk" className="text-sm font-semibold text-brand hover:underline">← Semua produk</Link>
+      <Link href="/admin/produk" className="inline-flex min-h-11 items-center text-sm font-semibold text-brand hover:underline">Semua produk</Link>
       <h1 className="text-2xl font-extrabold">Tambah produk</h1>
       <ProductForm categories={(data ?? []) as Category[]} />
     </div>

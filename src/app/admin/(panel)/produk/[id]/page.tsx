@@ -21,7 +21,7 @@ async function EditProduct({ params }: { params: PageProps<"/admin/produk/[id]">
   if (!product) notFound();
   return (
     <div className="flex flex-col gap-5">
-      <Link href="/admin/produk" className="text-sm font-semibold text-brand hover:underline">← Semua produk</Link>
+      <Link href="/admin/produk" className="inline-flex min-h-11 items-center text-sm font-semibold text-brand hover:underline">Semua produk</Link>
       <div className="flex flex-wrap items-center gap-3">
         <h1 className="text-2xl font-extrabold">Edit produk</h1>
         <Link href={`/produk/${product.slug}`} target="_blank" className="text-sm font-semibold text-brand hover:underline">Lihat di toko ↗</Link>

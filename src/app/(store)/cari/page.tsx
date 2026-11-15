@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
+import Link from "next/link";
 import { ProductGrid } from "@/components/ProductCard";
 import { SearchForm } from "@/components/SiteHeader";
 import { GridSkeleton } from "@/components/Skeleton";
@@ -16,12 +17,27 @@ async function Results({ searchParams }: { searchParams: PageProps<"/cari">["sea
   const products = await getProducts({ search: q || undefined });
   return (
     <div className="flex flex-col gap-5">
-      <SearchForm defaultValue={q} className="md:hidden" />
+      <SearchForm id="q-cari" defaultValue={q} className="md:hidden" />
       <div className="flex flex-col gap-1">
         <h1 className="text-xl font-extrabold md:text-3xl">{q ? `Hasil untuk “${q}”` : "Semua produk"}</h1>
         <p className="text-sm text-muted">{products.length} produk</p>
       </div>
-      <ProductGrid products={products} />
+      <ProductGrid
+        products={products}
+        heading="h2"
+        empty={
+          q ? (
+            <>
+              <p>Tidak ada produk yang cocok dengan “{q}”. Coba kata lain yang lebih umum.</p>
+              <Link href="/cari" className="flex min-h-11 items-center font-bold text-brand hover:underline">
+                Lihat semua produk
+              </Link>
+            </>
+          ) : (
+            <p>Produk belum ditambahkan. Cek lagi nanti, atau tanya admin lewat WhatsApp.</p>
+          )
+        }
+      />
     </div>
   );
 }

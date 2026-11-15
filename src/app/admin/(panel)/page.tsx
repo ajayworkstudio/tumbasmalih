@@ -8,6 +8,8 @@ import { paymentLabels, statusLabels, statusOrder } from "@/lib/site";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { Order, OrderStatus } from "@/lib/types";
 
+export const metadata = { title: "Pesanan | Admin" };
+
 async function Orders({ searchParams }: { searchParams: PageProps<"/admin">["searchParams"] }) {
   await requireAdmin();
   const sp = await searchParams;
@@ -35,15 +37,19 @@ async function Orders({ searchParams }: { searchParams: PageProps<"/admin">["sea
           <Link
             key={t.href}
             href={t.href}
-            className={`flex h-9 shrink-0 items-center rounded-xl border px-3 text-sm font-semibold ${t.on ? "border-brand bg-brand text-white" : "border-line bg-white hover:border-brand"}`}
+            className={`flex h-11 shrink-0 items-center rounded-xl border px-3 text-sm font-semibold ${t.on ? "border-brand bg-brand text-white" : "border-line bg-white hover:border-brand"}`}
           >
             {t.label}
           </Link>
         ))}
       </div>
-      {error && <p className="text-sm text-danger">Gagal memuat pesanan: {error.message}</p>}
-      {orders.length === 0 ? (
-        <p className="rounded-2xl border border-dashed border-line bg-white p-8 text-center text-sm text-muted">Belum ada pesanan.</p>
+      {error && (
+        <p role="alert" className="rounded-xl border border-danger bg-[#FDECEC] px-4 py-3 text-sm font-medium text-danger">
+          Gagal memuat pesanan: {error.message}. Muat ulang halaman; kalau masih gagal, cek koneksi Supabase di env.
+        </p>
+      )}
+      {error ? null : orders.length === 0 ? (
+        <p className="rounded-2xl border border-dashed border-field bg-white p-8 text-center text-sm text-muted">{status ? "Tidak ada pesanan dengan status ini." : "Belum ada pesanan. Pesanan baru dari checkout akan muncul di sini."}</p>
       ) : (
         <div className="overflow-x-auto rounded-2xl border border-line bg-white">
           <table className="w-full min-w-180 text-left text-sm">

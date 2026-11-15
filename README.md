@@ -10,7 +10,7 @@ Ebook bisa diunduh dari halaman pesanan setelah pembayaran dikonfirmasi.
 
 | Halaman | Isi |
 |---|---|
-| `/` | Beranda: banner, kategori, Pilihan Kurasi, Ebook |
+| `/` | Beranda: hero, kategori, pilihan kurasi, ebook |
 | `/kategori/[slug]`, `/cari?q=` | Daftar produk per kategori & pencarian |
 | `/produk/[slug]` | Detail produk + data terstruktur (JSON-LD) untuk Google |
 | `/keranjang`, `/checkout` | Keranjang (tersimpan di browser) & checkout |
@@ -25,7 +25,7 @@ Lainnya: `sitemap.xml`, `robots.txt`, metadata SEO per halaman, Meta Pixel
 
 ### 1. Siapkan Supabase
 1. Buat project baru di [supabase.com](https://supabase.com) (region Singapore).
-2. **SQL Editor** → jalankan isi `supabase/schema.sql`, lalu `supabase/seed.sql` (data contoh, boleh dihapus nanti).
+2. **SQL Editor** → jalankan isi `supabase/schema.sql`, lalu `supabase/seed.sql` (kategori awal). Produk ditambahkan dari `/admin/produk`.
 3. **Authentication › Users** → *Add user* → buat akun admin (email + password).
 4. **Project Settings › API** → salin URL, anon/publishable key, dan service_role/secret key.
 
@@ -41,6 +41,12 @@ npm run dev                  # buka http://localhost:3000
 2. Isi semua variabel dari `.env.example` di **Settings › Environment Variables**.
 3. Tambahkan domain `tumbasmalih.com` di **Settings › Domains** dan arahkan DNS sesuai petunjuk Vercel.
 4. Daftarkan `https://tumbasmalih.com/sitemap.xml` di Google Search Console.
+
+## Desain
+
+Arahan visual ada di `DESIGN.md`. Kode diaudit dengan aturan [anti-slop](https://github.com/miqdadbadjuber/anti-slop); laporannya ada di folder `anti-slop/`.
+
+Isi kebijakan toko di env `NEXT_PUBLIC_POLICY_SHIPPING`, `NEXT_PUBLIC_POLICY_RETURNS`, dan `NEXT_PUBLIC_POLICY_EBOOK`. Selama kosong, halaman menampilkan placeholder `[ISI ...]` supaya tidak ada janji yang dikarang.
 
 ## Alur kerja harian admin
 
@@ -64,6 +70,6 @@ npm run dev                  # buka http://localhost:3000
 
 ## Belum ada (rencana fase 2)
 - Payment gateway otomatis (Midtrans/Xendit) supaya status *dibayar* & pengiriman ebook otomatis
-- Ongkir real-time per kota (RajaOngkir / Biteship) — sekarang masih flat `SHIPPING_FLAT`
+- Ongkir real-time per kota (RajaOngkir / Biteship); sekarang masih flat `SHIPPING_FLAT`
 - Pengurangan stok otomatis, notifikasi WA/email otomatis, upload gambar langsung dari admin
 - Pembatasan spam di checkout (captcha / rate limit)

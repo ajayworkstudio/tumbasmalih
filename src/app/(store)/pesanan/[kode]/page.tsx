@@ -60,7 +60,7 @@ async function OrderView({ params, searchParams }: PageProps<"/pesanan/[kode]">)
           </p>
           {order.payment_method === "qris" &&
             (site.qrisImageUrl ? (
-              <img src={site.qrisImageUrl} alt="Kode QRIS tumbasmalih" className="mx-auto w-full max-w-70 rounded-2xl border border-line" />
+              <img src={site.qrisImageUrl} alt="Kode QRIS tumbasmalih" width={280} height={280} className="mx-auto aspect-square w-full max-w-70 rounded-2xl border border-line object-contain" />
             ) : (
               <p className="rounded-xl bg-ground p-4 text-sm text-muted">Kode QRIS akan dikirim admin lewat WhatsApp.</p>
             ))}
@@ -109,7 +109,7 @@ async function OrderView({ params, searchParams }: PageProps<"/pesanan/[kode]">)
               {it.type === "ebook" && isPaid ? (
                 <a
                   href={`/api/unduh/${order.code}/${it.id}`}
-                  className="flex h-10 items-center gap-1.5 rounded-xl bg-brand px-3.5 text-[13px] font-bold text-white hover:bg-brand-dark"
+                  className="flex h-11 items-center gap-1.5 rounded-xl bg-brand px-4 text-[13px] font-bold text-white hover:bg-brand-dark"
                 >
                   <Icon name="download" size={16} strokeWidth={2} /> Unduh
                 </a>
@@ -141,7 +141,7 @@ async function OrderView({ params, searchParams }: PageProps<"/pesanan/[kode]">)
         href={waLink(confirmMsg)}
         target="_blank"
         rel="noopener"
-        className="flex h-13 items-center justify-center gap-2 rounded-2xl bg-[#1FA855] font-bold text-white hover:bg-[#178A45]"
+        className="flex h-13 items-center justify-center gap-2 rounded-xl bg-wa font-bold text-white hover:bg-[#0f5f30]"
       >
         <Icon name="chat" size={20} />
         {awaitingPayment ? "Kirim bukti bayar via WhatsApp" : "Hubungi admin via WhatsApp"}

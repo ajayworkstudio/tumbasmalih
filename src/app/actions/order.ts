@@ -7,8 +7,12 @@ import { shippingFlat } from "@/lib/site";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { PaymentMethod, ProductType } from "@/lib/types";
 
+export type CheckoutValues = Partial<Record<"name" | "phone" | "email" | "address" | "city" | "postal_code" | "note", string>>;
+
 export type CheckoutState = {
   error?: string;
+  /** Isian terakhir, supaya form tidak kosong lagi setelah validasi gagal. */
+  values?: CheckoutValues;
   fieldErrors?: Partial<Record<"name" | "phone" | "email" | "address" | "city" | "postal_code" | "payment", string>>;
 };
 
@@ -55,8 +59,9 @@ export async function createOrder(_prev: CheckoutState, formData: FormData): Pro
   const note = str(formData, "note", 500);
   const payment = str(formData, "payment_method", 20) as PaymentMethod;
   const items = parseItems(str(formData, "items", 10_000));
+  const values: CheckoutValues = { name, phone: phoneRaw, email, address, city, postal_code: postalCode, note };
 
-  if (!items) return { error: "Keranjang kosong atau tidak valid. Muat ulang halaman lalu coba lagi." };
+  if (!items) return { error: "Keranjang kosong atau tidak valid. Muat ulang halaman lalu coba lagi.", values };
 
   const supabase = createAdminClient();
   const { data: products, error: productError } = await supabase
@@ -67,15 +72,15 @@ export async function createOrder(_prev: CheckoutState, formData: FormData): Pro
 
   if (productError) {
     console.error("createOrder products:", productError.message);
-    return { error: "Gagal memproses pesanan. Coba lagi sebentar lagi." };
+    return { error: "Gagal memproses pesanan. Coba lagi sebentar lagi.", values };
   }
 
   const byId = new Map((products ?? []).map((p) => [p.id as string, p]));
   if (byId.size !== items.length) {
-    return { error: "Ada produk di keranjang yang sudah tidak tersedia. Hapus produk itu lalu coba lagi." };
+    return { error: "Ada produk di keranjang yang sudah tidak tersedia. Hapus produk itu lalu coba lagi.", values };
   }
 
-  // Harga SELALU diambil dari database, bukan dari browser.
+  // Harga diambil dari database, bukan dari keranjang di browser.
   const lines = items.map(({ id, qty }) => {
     const p = byId.get(id)!;
     const type = p.type as ProductType;
@@ -85,7 +90,7 @@ export async function createOrder(_prev: CheckoutState, formData: FormData): Pro
 
   const soldOut = lines.find((l) => l.type === "fisik" && l.stock !== null && l.stock < l.qty);
   if (soldOut) {
-    return { error: `Stok "${soldOut.name}" tidak cukup (tersisa ${soldOut.stock}). Kurangi jumlahnya di keranjang.` };
+    return { error: `Stok "${soldOut.name}" tidak cukup (tersisa ${soldOut.stock}). Kurangi jumlahnya di keranjang.`, values };
   }
 
   const hasPhysical = lines.some((l) => l.type === "fisik");
@@ -103,7 +108,7 @@ export async function createOrder(_prev: CheckoutState, formData: FormData): Pro
   }
   if (!["qris", "transfer", "cod"].includes(payment)) fieldErrors.payment = "Pilih metode pembayaran.";
   if (payment === "cod" && !allPhysical) fieldErrors.payment = "COD hanya untuk pesanan yang semuanya barang fisik.";
-  if (Object.keys(fieldErrors).length > 0) return { fieldErrors };
+  if (Object.keys(fieldErrors).length > 0) return { fieldErrors, values };
 
   const subtotal = lines.reduce((n, l) => n + l.line_total, 0);
   const shippingFee = hasPhysical ? shippingFlat() : 0;
@@ -134,10 +139,10 @@ export async function createOrder(_prev: CheckoutState, formData: FormData): Pro
     if (data) orderId = data.id as string;
     else if (error && error.code !== "23505") {
       console.error("createOrder insert:", error.message);
-      return { error: "Gagal menyimpan pesanan. Coba lagi sebentar lagi." };
+      return { error: "Gagal menyimpan pesanan. Coba lagi sebentar lagi.", values };
     }
   }
-  if (!orderId) return { error: "Gagal membuat kode pesanan. Coba lagi." };
+  if (!orderId) return { error: "Gagal membuat kode pesanan. Coba lagi.", values };
 
   const { error: itemsError } = await supabase
     .from("order_items")
@@ -155,7 +160,7 @@ export async function createOrder(_prev: CheckoutState, formData: FormData): Pro
   if (itemsError) {
     console.error("createOrder items:", itemsError.message);
     await supabase.from("orders").delete().eq("id", orderId);
-    return { error: "Gagal menyimpan pesanan. Coba lagi sebentar lagi." };
+    return { error: "Gagal menyimpan pesanan. Coba lagi sebentar lagi.", values };
   }
 
   redirect(`/pesanan/${code}?baru=1`);

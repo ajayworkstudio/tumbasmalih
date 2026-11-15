@@ -64,7 +64,6 @@ const paths = {
   ),
   chat: <path d="M4 20l1.5-4A8 8 0 1 1 9 19.5z" />,
   download: <path d="M12 4v11M7 10l5 5 5-5M5 20h14" />,
-  // ikon kategori
   book: (
     <>
       <path d="M4 4h11a3 3 0 0 1 3 3v13H7a3 3 0 0 1-3-3z" />
@@ -104,7 +103,7 @@ export function isIconName(name: string): name is IconName {
 export function Icon({
   name,
   size = 20,
-  strokeWidth = 1.8,
+  strokeWidth = 2,
   ...rest
 }: { name: IconName; size?: number; strokeWidth?: number } & SVGProps<SVGSVGElement>) {
   return (

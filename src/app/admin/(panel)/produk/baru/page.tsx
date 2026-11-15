@@ -6,6 +6,8 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import type { Category } from "@/lib/types";
 import { ProductForm } from "../ProductForm";
 
+export const metadata = { title: "Tambah produk | Admin" };
+
 async function NewProduct() {
   await requireAdmin();
   const { data } = await createAdminClient().from("categories").select("*").order("sort");

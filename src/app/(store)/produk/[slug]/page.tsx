@@ -10,13 +10,13 @@ import { BlockSkeleton } from "@/components/Skeleton";
 import { TrackEvent } from "@/components/TrackEvent";
 import { getCategories, getProductBySlug, getProducts } from "@/lib/data";
 import { formatRupiah } from "@/lib/format";
-import { site } from "@/lib/site";
+import { policy, site } from "@/lib/site";
 
 export async function generateMetadata({ params }: PageProps<"/produk/[slug]">): Promise<Metadata> {
   const { slug } = await params;
   const p = await getProductBySlug(slug);
   if (!p) return { title: "Produk tidak ditemukan" };
-  const description = (p.description || `${p.name} — ${formatRupiah(p.price)} di ${site.name}.`).slice(0, 160);
+  const description = (p.description || `${p.name}, ${formatRupiah(p.price)} di ${site.name}.`).slice(0, 160);
   return {
     title: p.name,
     description,
@@ -66,38 +66,41 @@ async function ProductDetail({ params }: { params: PageProps<"/produk/[slug]">["
         params={{ content_ids: [product.id], content_type: "product", value: product.price, currency: "IDR" }}
       />
       <nav aria-label="Breadcrumb" className="flex items-center gap-2 text-sm text-muted">
-        <Link href="/" className="hover:text-brand">Beranda</Link>
+        <Link href="/" className="inline-flex min-h-11 items-center hover:text-brand hover:underline">Beranda</Link>
         {category && (
           <>
             <span aria-hidden="true">/</span>
-            <Link href={`/kategori/${category.slug}`} className="hover:text-brand">{category.name}</Link>
+            <Link href={`/kategori/${category.slug}`} className="inline-flex min-h-11 items-center hover:text-brand hover:underline">{category.name}</Link>
           </>
         )}
       </nav>
 
       <div className="grid gap-6 md:grid-cols-2 md:gap-10">
         <div className="aspect-square overflow-hidden rounded-3xl border border-line bg-white">
-          <ProductImage src={product.image_url} alt={product.name} type={product.type} iconSize={96} />
+          <ProductImage src={product.image_url} alt={product.name} type={product.type} iconSize={96} priority />
         </div>
         <div className="flex flex-col gap-4">
-          <span className="text-sm font-semibold text-warn">{productTag(product)}</span>
+          {productTag(product) && <span className="text-sm font-semibold text-warn">{productTag(product)}</span>}
           <h1 className="text-2xl leading-tight font-extrabold md:text-[32px]">{product.name}</h1>
           <div className="flex items-baseline gap-3">
             <span className="text-2xl font-extrabold text-brand md:text-3xl">{formatRupiah(product.price)}</span>
             {product.compare_price && product.compare_price > product.price && (
-              <span className="text-muted line-through">{formatRupiah(product.compare_price)}</span>
+              <span className="text-muted">
+                <span className="sr-only">Harga sebelumnya </span>
+                <s>{formatRupiah(product.compare_price)}</s>
+              </span>
             )}
           </div>
           <div className="flex flex-col gap-2 rounded-2xl border border-line bg-white p-4 text-sm">
             {isEbook ? (
               <>
-                <p className="flex items-center gap-2"><Icon name="download" size={18} className="text-brand" /> Format digital (PDF), tidak ada pengiriman fisik</p>
-                <p className="flex items-center gap-2"><Icon name="check" size={18} className="text-brand" /> Link unduh muncul di halaman pesanan setelah pembayaran dikonfirmasi</p>
+                <p className="flex items-start gap-2"><Icon name="download" size={18} className="mt-0.5 shrink-0 text-brand" /> File digital, tidak ada pengiriman fisik.</p>
+                <p className="flex items-start gap-2"><Icon name="check" size={18} className="mt-0.5 shrink-0 text-brand" /> Link unduh muncul di halaman pesanan setelah pembayaran dikonfirmasi admin.</p>
               </>
             ) : (
               <>
-                <p className="flex items-center gap-2"><Icon name="truck" size={18} className="text-brand" /> Dikirim ke seluruh Indonesia, estimasi 2–5 hari</p>
-                <p className="flex items-center gap-2"><Icon name="check" size={18} className="text-brand" /> Bisa bayar di tempat (COD)</p>
+                <p className="flex items-start gap-2"><Icon name="truck" size={18} className="mt-0.5 shrink-0 text-brand" /> Estimasi pengiriman: {policy.shippingTime || "[ISI ESTIMASI PENGIRIMAN]"}</p>
+                <p className="flex items-start gap-2"><Icon name="check" size={18} className="mt-0.5 shrink-0 text-brand" /> Bisa bayar di tempat (COD).</p>
               </>
             )}
           </div>

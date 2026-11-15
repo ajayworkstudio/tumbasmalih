@@ -7,6 +7,8 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import type { AdminProduct, Category } from "@/lib/types";
 import { ProductForm } from "../ProductForm";
 
+export const metadata = { title: "Edit produk | Admin" };
+
 async function EditProduct({ params }: { params: PageProps<"/admin/produk/[id]">["params"] }) {
   await requireAdmin();
   const { id } = await params;

@@ -15,9 +15,9 @@ export function CartView() {
           <Icon name="cart" size={30} />
         </span>
         <h1 className="text-xl font-extrabold">Keranjang masih kosong</h1>
-        <p className="max-w-80 text-sm text-muted">Yuk, lihat pilihan kurasi kami dan tumbas sesuatu.</p>
-        <Link href="/" className="flex h-12 items-center rounded-2xl bg-brand px-6 font-bold text-white hover:bg-brand-dark">
-          Mulai belanja
+        <p className="max-w-80 text-sm text-muted">Produk yang kamu tambahkan akan muncul di sini.</p>
+        <Link href="/#pilihan" className="flex h-12 items-center rounded-xl bg-brand px-6 font-bold text-white hover:bg-brand-dark">
+          Lihat produk pilihan
         </Link>
       </div>
     );
@@ -34,20 +34,20 @@ export function CartView() {
                 <ProductImage src={it.image_url} alt={it.name} type={it.type} iconSize={30} />
               </Link>
               <div className="flex min-w-0 flex-1 flex-col gap-1">
-                <Link href={`/produk/${it.slug}`} className="line-clamp-2 text-sm font-semibold hover:text-brand">
+                <Link href={`/produk/${it.slug}`} className="-my-3 line-clamp-2 py-3 text-sm font-semibold hover:text-brand hover:underline">
                   {it.name}
                 </Link>
-                <span className="text-xs font-semibold text-warn">{it.type === "ebook" ? "Ebook · Unduh instan" : "Barang fisik"}</span>
-                <div className="mt-auto flex items-center justify-between gap-2">
+                <span className="text-xs font-semibold text-muted">{it.type === "ebook" ? "Ebook" : "Barang fisik"}</span>
+                <div className="mt-auto flex flex-wrap items-center justify-between gap-x-2 gap-y-1">
                   <span className="font-bold">{formatRupiah(it.price * it.qty)}</span>
                   <div className="flex items-center gap-1.5">
                     {it.type === "fisik" && (
-                      <div className="flex items-center rounded-xl border border-line">
+                      <div className="flex items-center rounded-lg border border-field">
                         <button
                           type="button"
                           aria-label="Kurangi jumlah"
                           onClick={() => cart.setQty(it.id, it.qty - 1)}
-                          className="flex size-9 items-center justify-center text-muted hover:text-brand"
+                          className="flex size-11 items-center justify-center rounded-lg text-ink hover:bg-brand-soft hover:text-brand"
                         >
                           <Icon name="minus" size={16} strokeWidth={2.2} />
                         </button>
@@ -56,7 +56,7 @@ export function CartView() {
                           type="button"
                           aria-label="Tambah jumlah"
                           onClick={() => cart.setQty(it.id, it.qty + 1)}
-                          className="flex size-9 items-center justify-center text-muted hover:text-brand"
+                          className="flex size-11 items-center justify-center rounded-lg text-ink hover:bg-brand-soft hover:text-brand"
                         >
                           <Icon name="plus" size={16} strokeWidth={2.2} />
                         </button>
@@ -66,7 +66,7 @@ export function CartView() {
                       type="button"
                       aria-label={`Hapus ${it.name}`}
                       onClick={() => cart.remove(it.id)}
-                      className="flex size-9 items-center justify-center rounded-xl text-muted hover:bg-ground hover:text-danger"
+                      className="flex size-11 items-center justify-center rounded-lg text-muted hover:bg-[#FDECEC] hover:text-danger"
                     >
                       <Icon name="trash" size={18} />
                     </button>
@@ -87,7 +87,7 @@ export function CartView() {
         <p className="text-xs text-muted">Ongkir dihitung di halaman checkout.</p>
         <Link
           href="/checkout"
-          className="mt-1 flex h-13 items-center justify-center rounded-2xl bg-brand font-bold text-white hover:bg-brand-dark"
+          className="mt-1 flex h-13 items-center justify-center rounded-xl bg-brand font-bold text-white hover:bg-brand-dark"
         >
           Lanjut ke checkout
         </Link>

@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { useActionState, useEffect, useState } from "react";
+import { startTransition, useActionState, useEffect, useState } from "react";
 import { createOrder, type CheckoutState } from "@/app/actions/order";
 import { Icon, type IconName } from "@/components/Icon";
 import { ProductImage } from "@/components/ProductImage";
@@ -10,13 +10,13 @@ import { track } from "@/lib/pixel";
 import type { PaymentMethod } from "@/lib/types";
 
 const methods: { id: PaymentMethod; label: string; sub: string; icon: IconName }[] = [
-  { id: "qris", label: "QRIS", sub: "GoPay, OVO, DANA, ShopeePay, m-banking", icon: "qris" },
+  { id: "qris", label: "QRIS", sub: "Scan dari e-wallet atau m-banking", icon: "qris" },
   { id: "transfer", label: "Transfer Bank", sub: "Transfer manual ke rekening kami", icon: "bank" },
   { id: "cod", label: "Bayar di Tempat (COD)", sub: "Khusus pesanan barang fisik", icon: "truck" },
 ];
 
 const inputCls =
-  "h-12 w-full rounded-xl border border-line bg-white px-3.5 text-sm outline-none focus:border-brand aria-[invalid=true]:border-danger";
+  "h-12 w-full rounded-lg border border-field bg-white px-3.5 text-sm aria-[invalid=true]:border-2 aria-[invalid=true]:border-danger";
 
 function Field({
   label,
@@ -41,6 +41,7 @@ export function CheckoutForm({ shippingFee }: { shippingFee: number }) {
   const shipping = hasPhysical ? shippingFee : 0;
   const total = subtotal + shipping;
   const fe = state.fieldErrors ?? {};
+  const v = state.values ?? {};
   const selected = method === "cod" && !allPhysical ? "qris" : method;
 
   useEffect(() => {
@@ -53,24 +54,31 @@ export function CheckoutForm({ shippingFee }: { shippingFee: number }) {
     return (
       <div className="flex flex-col items-center gap-4 rounded-3xl border border-line bg-white px-6 py-16 text-center">
         <h1 className="text-xl font-extrabold">Keranjang kosong</h1>
-        <Link href="/" className="flex h-12 items-center rounded-2xl bg-brand px-6 font-bold text-white hover:bg-brand-dark">
-          Mulai belanja
+        <Link href="/#pilihan" className="flex h-12 items-center rounded-xl bg-brand px-6 font-bold text-white hover:bg-brand-dark">
+          Lihat produk pilihan
         </Link>
       </div>
     );
   }
 
   return (
-    <form action={action} className="grid gap-5 pb-28 lg:grid-cols-[1fr_380px] lg:pb-0">
+    <form
+      // Dikirim lewat onSubmit (bukan prop action) supaya React tidak mengosongkan form saat validasi gagal.
+      onSubmit={(e) => {
+        e.preventDefault();
+        const data = new FormData(e.currentTarget);
+        startTransition(() => action(data));
+      }}
+      className="grid gap-5 lg:grid-cols-[1fr_380px]"
+    >
       <input type="hidden" name="items" value={JSON.stringify(items.map((i) => ({ id: i.id, qty: i.qty })))} />
-      <input type="hidden" name="payment_method" value={selected} />
 
       <div className="flex flex-col gap-4">
         <div className="flex items-center gap-3">
           <Link
             href="/keranjang"
             aria-label="Kembali ke keranjang"
-            className="flex size-11.5 items-center justify-center rounded-full border border-line bg-white hover:border-brand"
+            className="flex size-11.5 items-center justify-center rounded-full border border-field bg-white hover:border-brand hover:bg-brand-soft"
           >
             <Icon name="back" size={20} strokeWidth={2} />
           </Link>
@@ -78,7 +86,7 @@ export function CheckoutForm({ shippingFee }: { shippingFee: number }) {
         </div>
 
         {state.error && (
-          <p role="alert" className="rounded-2xl border border-danger/30 bg-[#FDECEC] p-4 text-sm font-medium text-danger">
+          <p role="alert" className="rounded-xl border border-danger bg-[#FDECEC] p-4 text-sm font-medium text-danger">
             {state.error}
           </p>
         )}
@@ -87,10 +95,10 @@ export function CheckoutForm({ shippingFee }: { shippingFee: number }) {
           <h2 className="flex items-center gap-2 font-bold">
             <Icon name="user" size={18} className="text-brand" /> Data pembeli
           </h2>
-          <Field label="Nama lengkap" name="name" autoComplete="name" required error={fe.name} />
+          <Field label="Nama lengkap" name="name" defaultValue={v.name} autoComplete="name" required error={fe.name} />
           <div className="grid gap-3.5 sm:grid-cols-2">
-            <Field label="Nomor WhatsApp" name="phone" type="tel" inputMode="tel" autoComplete="tel" placeholder="08xxxxxxxxxx" required error={fe.phone} />
-            <Field label="Email" name="email" type="email" autoComplete="email" required error={fe.email} />
+            <Field label="Nomor WhatsApp" name="phone" defaultValue={v.phone} type="tel" inputMode="tel" autoComplete="tel" placeholder="08xxxxxxxxxx" required error={fe.phone} />
+            <Field label="Email" name="email" defaultValue={v.email} type="email" autoComplete="email" required error={fe.email} />
           </div>
           {!hasPhysical && <p className="text-xs text-muted">Ebook akan bisa diunduh dari halaman pesanan setelah pembayaran dikonfirmasi.</p>}
         </section>
@@ -104,55 +112,57 @@ export function CheckoutForm({ shippingFee }: { shippingFee: number }) {
               Alamat lengkap
               <textarea
                 name="address"
+                defaultValue={v.address}
                 rows={3}
                 required
                 autoComplete="street-address"
                 aria-invalid={fe.address ? true : undefined}
                 placeholder="Nama jalan, nomor rumah, RT/RW, kelurahan, kecamatan"
-                className="w-full rounded-xl border border-line px-3.5 py-3 text-sm outline-none focus:border-brand aria-[invalid=true]:border-danger"
+                className="w-full rounded-lg border border-field px-3.5 py-3 text-sm aria-[invalid=true]:border-2 aria-[invalid=true]:border-danger"
               />
               {fe.address && <span className="text-xs font-medium text-danger">{fe.address}</span>}
             </label>
             <div className="grid gap-3.5 sm:grid-cols-[1fr_160px]">
-              <Field label="Kota / Kabupaten" name="city" autoComplete="address-level2" required error={fe.city} />
-              <Field label="Kode pos" name="postal_code" inputMode="numeric" maxLength={5} autoComplete="postal-code" required error={fe.postal_code} />
+              <Field label="Kota / Kabupaten" name="city" defaultValue={v.city} autoComplete="address-level2" required error={fe.city} />
+              <Field label="Kode pos" name="postal_code" defaultValue={v.postal_code} inputMode="numeric" maxLength={5} autoComplete="postal-code" required error={fe.postal_code} />
             </div>
           </section>
         )}
 
         <section className="flex flex-col gap-2.5 rounded-[18px] border border-line bg-white p-4 md:p-5">
           <h2 className="font-bold">Metode pembayaran</h2>
-          <div role="radiogroup" aria-label="Metode pembayaran" className="flex flex-col gap-2.5">
+          <fieldset className="flex flex-col gap-2.5">
+            <legend className="sr-only">Pilih metode pembayaran</legend>
             {methods.map((m) => {
               const disabled = m.id === "cod" && !allPhysical;
               const on = selected === m.id;
               return (
-                <button
+                <label
                   key={m.id}
-                  type="button"
-                  role="radio"
-                  aria-checked={on}
-                  disabled={disabled}
-                  onClick={() => setMethod(m.id)}
-                  className={`flex min-h-15 w-full items-center gap-3 rounded-[14px] border px-3 py-2.5 text-left disabled:cursor-not-allowed disabled:opacity-50 ${
-                    on ? "border-[1.5px] border-brand bg-[#F3F6FF]" : "border-line bg-white hover:border-brand"
-                  }`}
+                  className={`flex min-h-15 items-center gap-3 rounded-xl border px-3 py-2.5 ${
+                    disabled ? "cursor-not-allowed opacity-60" : "hover:border-brand"
+                  } ${on ? "border-2 border-brand bg-[#F3F6FF]" : "border-field bg-white"}`}
                 >
-                  <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-brand-soft text-brand">
+                  <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-brand-soft text-brand">
                     <Icon name={m.icon} size={20} />
                   </span>
                   <span className="flex flex-1 flex-col gap-0.5">
                     <span className="text-sm font-bold">{m.label}</span>
                     <span className="text-xs text-muted">{m.sub}</span>
                   </span>
-                  <span
-                    aria-hidden="true"
-                    className={`size-5 shrink-0 rounded-full ${on ? "border-[6px] border-brand bg-white" : "border-2 border-[#A9B4C8]"}`}
+                  <input
+                    type="radio"
+                    name="payment_method"
+                    value={m.id}
+                    checked={on}
+                    disabled={disabled}
+                    onChange={() => setMethod(m.id)}
+                    className="size-5 shrink-0 accent-brand"
                   />
-                </button>
+                </label>
               );
             })}
-          </div>
+          </fieldset>
           {fe.payment && <span className="text-xs font-medium text-danger">{fe.payment}</span>}
           {!allPhysical && (
             <p className="flex items-start gap-2 rounded-xl bg-[#FFF8E1] px-3 py-2.5 text-xs leading-relaxed text-[#6B4E00]">
@@ -164,7 +174,7 @@ export function CheckoutForm({ shippingFee }: { shippingFee: number }) {
 
         <label className="flex flex-col gap-1.5 rounded-[18px] border border-line bg-white p-4 text-sm font-semibold md:p-5">
           Catatan (opsional)
-          <input name="note" maxLength={500} className={inputCls} placeholder="Contoh: warna hitam, titip ke satpam" />
+          <input name="note" defaultValue={v.note} maxLength={500} className={inputCls} placeholder="Contoh: warna hitam, titip ke satpam" />
         </label>
       </div>
 
@@ -200,19 +210,18 @@ export function CheckoutForm({ shippingFee }: { shippingFee: number }) {
           <span>{formatRupiah(total)}</span>
         </div>
 
-        <div className="fixed inset-x-0 bottom-0 z-40 flex items-center gap-3.5 border-t border-line bg-white px-5 pt-3.5 pb-5 lg:static lg:border-0 lg:p-0">
-          <span className="flex flex-col lg:hidden">
-            <span className="text-[11px] text-muted">Total bayar</span>
-            <span className="text-lg font-extrabold">{formatRupiah(total)}</span>
-          </span>
-          <button
-            type="submit"
-            disabled={pending}
-            className="h-13.5 flex-1 rounded-2xl bg-brand text-[15px] font-bold text-white hover:bg-brand-dark disabled:opacity-60"
-          >
-            {pending ? "Memproses…" : selected === "cod" ? "Buat Pesanan" : "Bayar Sekarang"}
-          </button>
-        </div>
+        <button
+          type="submit"
+          disabled={pending}
+          className="mt-1 h-13.5 w-full rounded-xl bg-brand text-[15px] font-bold text-white hover:bg-brand-dark active:bg-[#122f8a] disabled:opacity-60"
+        >
+          {pending ? "Membuat pesanan…" : "Buat pesanan"}
+        </button>
+        <p className="text-xs leading-relaxed text-muted">
+          {selected === "cod"
+            ? "Admin akan menghubungi lewat WhatsApp untuk konfirmasi sebelum barang dikirim."
+            : "Instruksi pembayaran muncul di halaman berikutnya."}
+        </p>
       </aside>
     </form>
   );

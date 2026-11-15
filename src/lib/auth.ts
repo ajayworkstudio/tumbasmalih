@@ -1,5 +1,6 @@
 import "server-only";
 import { redirect } from "next/navigation";
+import { connection } from "next/server";
 import { hasSupabaseEnv } from "./supabase/env";
 import { createSessionClient } from "./supabase/server";
 
@@ -12,6 +13,8 @@ function adminEmails(): string[] {
 
 /** Kembalikan email admin yang sedang login, atau null. */
 export async function getAdminEmail(): Promise<string | null> {
+  // Tandai halaman sebagai dinamis walau env belum diisi, supaya tidak di-prerender saat build.
+  await connection();
   if (!hasSupabaseEnv()) return null;
   const supabase = await createSessionClient();
   const { data } = await supabase.auth.getUser();

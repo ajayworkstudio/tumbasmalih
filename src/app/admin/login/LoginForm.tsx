@@ -33,11 +33,11 @@ export function LoginForm() {
       </h1>
       <label className="flex flex-col gap-1.5 text-sm font-semibold">
         Email
-        <input name="email" type="email" required autoComplete="email" className="h-12 rounded-xl border border-line px-3.5 outline-none focus:border-brand" />
+        <input name="email" type="email" required autoComplete="email" className="h-12 rounded-lg border border-field px-3.5" />
       </label>
       <label className="flex flex-col gap-1.5 text-sm font-semibold">
         Password
-        <input name="password" type="password" required autoComplete="current-password" className="h-12 rounded-xl border border-line px-3.5 outline-none focus:border-brand" />
+        <input name="password" type="password" required autoComplete="current-password" className="h-12 rounded-lg border border-field px-3.5" />
       </label>
       {error && <p role="alert" className="text-sm text-danger">{error}</p>}
       <button type="submit" disabled={pending} className="h-12 rounded-xl bg-brand font-bold text-white hover:bg-brand-dark disabled:opacity-60">

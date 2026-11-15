@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { CategoryTiles } from "@/components/CategoryTiles";
+import Link from "next/link";
 import { ProductGrid } from "@/components/ProductCard";
 import { GridSkeleton } from "@/components/Skeleton";
 import { getCategories, getCategoryBySlug, getProducts } from "@/lib/data";
@@ -11,8 +12,8 @@ export async function generateMetadata({ params }: PageProps<"/kategori/[slug]">
   const category = await getCategoryBySlug(slug);
   if (!category) return { title: "Kategori tidak ditemukan" };
   return {
-    title: `${category.name} pilihan`,
-    description: `Belanja ${category.name.toLowerCase()} pilihan yang sudah dikurasi tumbasmalih. Bayar QRIS, transfer, atau COD.`,
+    title: category.name,
+    description: `${category.name} pilihan di tumbasmalih. Bayar pakai QRIS, transfer bank, atau COD untuk barang fisik.`,
     alternates: { canonical: `/kategori/${category.slug}` },
   };
 }
@@ -27,10 +28,21 @@ async function CategoryContent({ params }: { params: PageProps<"/kategori/[slug]
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-1">
         <h1 className="text-xl font-extrabold md:text-3xl">{category.name}</h1>
-        <p className="text-sm text-muted">{products.length} produk pilihan</p>
+        <p className="text-sm text-muted">{products.length} produk</p>
       </div>
       <CategoryTiles categories={categories} activeSlug={category.slug} />
-      <ProductGrid products={products} />
+      <ProductGrid
+        products={products}
+        heading="h2"
+        empty={
+          <>
+            <p>Belum ada produk di kategori {category.name}.</p>
+            <Link href="/cari" className="flex min-h-11 items-center font-bold text-brand hover:underline">
+              Lihat semua produk
+            </Link>
+          </>
+        }
+      />
     </div>
   );
 }

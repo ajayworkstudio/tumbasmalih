@@ -34,7 +34,7 @@ export function AddToCartButton({ product, variant = "icon" }: Props) {
         type="button"
         onClick={add}
         disabled={soldOut}
-        className="flex h-13 flex-1 items-center justify-center gap-2 rounded-2xl bg-brand px-6 text-[15px] font-bold text-white transition hover:bg-brand-dark disabled:cursor-not-allowed disabled:bg-muted"
+        className="flex h-13 flex-1 items-center justify-center gap-2 rounded-xl bg-brand px-6 text-[15px] font-bold text-white hover:bg-brand-dark active:bg-[#122f8a] disabled:bg-muted"
       >
         <Icon name={added ? "check" : "cart"} size={20} />
         {soldOut ? "Stok habis" : added ? "Masuk keranjang" : "Tambah ke keranjang"}
@@ -48,9 +48,10 @@ export function AddToCartButton({ product, variant = "icon" }: Props) {
       onClick={add}
       disabled={soldOut}
       aria-label={soldOut ? "Stok habis" : `Tambah ${product.name} ke keranjang`}
-      className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-accent text-ink transition hover:bg-accent-dark disabled:cursor-not-allowed disabled:opacity-40"
+      className="flex size-11 shrink-0 items-center justify-center rounded-xl border border-field bg-white text-brand hover:border-brand hover:bg-brand-soft active:bg-brand-tint disabled:border-line disabled:text-muted"
     >
-      <Icon name={added ? "check" : "plus"} size={18} strokeWidth={2.2} />
+      <Icon name={added ? "check" : "plus"} size={20} strokeWidth={2.2} />
+      <span className="sr-only" aria-live="polite">{added ? "Sudah masuk keranjang" : ""}</span>
     </button>
   );
 }

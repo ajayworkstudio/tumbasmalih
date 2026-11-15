@@ -27,7 +27,6 @@ function intOrNull(fd: FormData, key: string): number | null | "invalid" {
   return Number.isInteger(n) && n >= 0 ? n : "invalid";
 }
 
-// ─────────────── Pesanan ───────────────
 
 export async function updateOrder(formData: FormData) {
   await requireAdmin();
@@ -52,12 +51,14 @@ export async function updateOrder(formData: FormData) {
   redirect(`/admin/pesanan/${id}?disimpan=1`);
 }
 
-// ─────────────── Produk ───────────────
 
-export type ProductFormState = { error?: string };
+export type ProductFormState = { error?: string; values?: Record<string, string> };
 
 export async function saveProduct(_prev: ProductFormState, formData: FormData): Promise<ProductFormState> {
   await requireAdmin();
+  const values = Object.fromEntries(
+    [...formData.entries()].filter(([k, v]) => typeof v === "string" && !k.startsWith("$")),
+  ) as Record<string, string>;
 
   const id = text(formData, "id", 40);
   const name = text(formData, "name", 150);
@@ -69,12 +70,12 @@ export async function saveProduct(_prev: ProductFormState, formData: FormData): 
   const sourcePrice = intOrNull(formData, "source_price");
   const categoryId = text(formData, "category_id", 40) || null;
 
-  if (name.length < 3) return { error: "Nama produk minimal 3 karakter." };
-  if (!slug) return { error: "Slug tidak valid." };
-  if (type !== "ebook" && type !== "fisik") return { error: "Pilih jenis produk." };
-  if (price === null || price === "invalid") return { error: "Harga jual wajib angka bulat (contoh: 29000)." };
+  if (name.length < 3) return { error: "Nama produk minimal 3 karakter.", values };
+  if (!slug) return { error: "Slug tidak valid.", values };
+  if (type !== "ebook" && type !== "fisik") return { error: "Pilih jenis produk.", values };
+  if (price === null || price === "invalid") return { error: "Harga jual wajib angka bulat (contoh: 29000).", values };
   if (comparePrice === "invalid" || stock === "invalid" || sourcePrice === "invalid") {
-    return { error: "Harga coret, stok, dan harga modal harus angka bulat atau dikosongkan." };
+    return { error: "Harga coret, stok, dan harga modal harus angka bulat atau dikosongkan.", values };
   }
 
   const row = {
@@ -100,12 +101,11 @@ export async function saveProduct(_prev: ProductFormState, formData: FormData): 
     : await supabase.from("products").insert(row);
 
   if (error) {
-    if (error.code === "23505") return { error: `Slug "${slug}" sudah dipakai produk lain. Ganti slug-nya.` };
+    if (error.code === "23505") return { error: `Slug "${slug}" sudah dipakai produk lain. Ganti slug-nya.`, values };
     console.error("saveProduct:", error.message);
-    return { error: "Gagal menyimpan produk." };
+    return { error: "Gagal menyimpan produk.", values };
   }
 
-  // Segarkan katalog di toko.
   updateTag("catalog");
   redirect("/admin/produk?disimpan=1");
 }

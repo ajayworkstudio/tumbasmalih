@@ -9,7 +9,7 @@ export function CartButton({ className = "" }: { className?: string }) {
     <Link
       href="/keranjang"
       aria-label={count ? `Keranjang, ${count} barang` : "Keranjang"}
-      className={`relative flex size-11.5 items-center justify-center border border-line bg-white text-ink hover:border-brand ${className}`}
+      className={`relative flex size-11.5 items-center justify-center border border-field bg-white text-ink hover:border-brand hover:bg-brand-soft ${className}`}
     >
       <Icon name="cart" size={22} />
       {count > 0 && (

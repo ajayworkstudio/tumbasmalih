@@ -17,10 +17,7 @@ export async function getCategories(): Promise<Category[]> {
     .from("categories")
     .select("id, slug, name, icon, sort")
     .order("sort", { ascending: true });
-  if (error) {
-    console.error("getCategories:", error.message);
-    return [];
-  }
+  if (error) throw new Error(`Gagal memuat kategori: ${error.message}`);
   return data ?? [];
 }
 
@@ -61,10 +58,7 @@ export async function getProducts(query: ProductQuery = {}): Promise<Product[]> 
   if (query.limit) q = q.limit(query.limit);
 
   const { data, error } = await q;
-  if (error) {
-    console.error("getProducts:", error.message);
-    return [];
-  }
+  if (error) throw new Error(`Gagal memuat produk: ${error.message}`);
   return (data ?? []) as Product[];
 }
 
@@ -79,9 +73,6 @@ export async function getProductBySlug(slug: string): Promise<Product | null> {
     .eq("is_active", true)
     .eq("slug", slug)
     .maybeSingle();
-  if (error) {
-    console.error("getProductBySlug:", error.message);
-    return null;
-  }
+  if (error) throw new Error(`Gagal memuat produk: ${error.message}`);
   return data as Product | null;
 }

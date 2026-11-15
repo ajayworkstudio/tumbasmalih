@@ -3,7 +3,10 @@ import { getCategories, getProducts } from "@/lib/data";
 import { site } from "@/lib/site";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const [categories, products] = await Promise.all([getCategories(), getProducts()]);
+  const [categories, products] = await Promise.all([getCategories(), getProducts()]).catch((e) => {
+    console.error("sitemap:", e);
+    return [[], []] as [Awaited<ReturnType<typeof getCategories>>, Awaited<ReturnType<typeof getProducts>>];
+  });
   return [
     { url: site.url, changeFrequency: "daily", priority: 1 },
     { url: `${site.url}/cari`, changeFrequency: "daily", priority: 0.6 },

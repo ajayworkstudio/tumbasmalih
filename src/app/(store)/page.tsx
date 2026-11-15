@@ -1,148 +1,161 @@
 import Link from "next/link";
+import { AddToCartButton } from "@/components/AddToCartButton";
 import { CategoryTiles } from "@/components/CategoryTiles";
-import { Icon, type IconName } from "@/components/Icon";
+import { Icon } from "@/components/Icon";
 import { ProductGrid } from "@/components/ProductCard";
+import { ProductImage } from "@/components/ProductImage";
 import { SearchForm } from "@/components/SiteHeader";
 import { getCategories, getProducts } from "@/lib/data";
+import { formatRupiah } from "@/lib/format";
+import type { Product } from "@/lib/types";
 
-const reasons: { icon: IconName; title: string; body: string }[] = [
+const reasons = [
   {
-    icon: "check",
-    title: "Sudah dikurasi",
-    body: "Tidak perlu membandingkan ratusan toko. Kami pilihkan barang yang layak dibeli.",
+    title: "Kami pilihkan dulu",
+    body: "Barang di sini kami pilih sendiri, jadi kamu tidak perlu membandingkan banyak toko.",
   },
   {
-    icon: "qris",
-    title: "Bayar semudahnya",
-    body: "QRIS, transfer bank, atau COD untuk barang fisik. Tanpa perlu akun marketplace.",
+    title: "Tanpa akun marketplace",
+    body: "Cukup isi nama, nomor WhatsApp, dan alamat. Bayar lewat QRIS, transfer bank, atau COD untuk barang fisik.",
   },
   {
-    icon: "chat",
-    title: "Dibantu lewat WhatsApp",
-    body: "Tanya produk, cek status pesanan, sampai urus retur, langsung ngobrol dengan admin.",
+    title: "Ada admin yang membalas",
+    body: "Pertanyaan produk, status pesanan, sampai urusan retur, semuanya lewat WhatsApp dengan admin.",
   },
 ];
+
+function EbookRow({ product }: { product: Product }) {
+  return (
+    <li className="flex items-center gap-3.5 border-b border-line py-3.5 last:border-0">
+      <Link href={`/produk/${product.slug}`} className="size-18 shrink-0 overflow-hidden rounded-xl">
+        <ProductImage src={product.image_url} alt={product.name} type="ebook" iconSize={28} />
+      </Link>
+      <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+        <h3 className="line-clamp-2 text-sm font-bold">
+          <Link href={`/produk/${product.slug}`} className="hover:text-brand hover:underline">
+            {product.name}
+          </Link>
+        </h3>
+        <span className="text-sm font-semibold text-brand">{formatRupiah(product.price)}</span>
+      </div>
+      <AddToCartButton product={product} />
+    </li>
+  );
+}
 
 export default async function HomePage() {
   const [categories, featured, ebooks] = await Promise.all([
     getCategories(),
     getProducts({ featured: true, limit: 8 }),
-    getProducts({ type: "ebook", limit: 4 }),
+    getProducts({ type: "ebook", limit: 6 }),
   ]);
-  const ebookCategory = categories.find((c) => c.slug === "ebook");
 
   return (
-    <div className="flex flex-col gap-10 md:gap-12">
-      <SearchForm className="md:hidden" />
+    <div className="flex flex-col gap-10 md:gap-14">
+      <SearchForm id="q-home" className="md:hidden" />
 
-      {/* Hero */}
-      <section className="flex flex-wrap gap-5">
-        <div className="relative flex min-h-[150px] flex-[2_1_560px] flex-wrap items-center gap-8 overflow-hidden rounded-[22px] bg-brand p-5 text-white md:min-h-85 md:rounded-[28px] md:p-11">
-          <div aria-hidden="true" className="absolute -top-20 -right-20 size-90 rounded-full bg-[#2C5DF0]" />
-          <div className="relative flex flex-[1_1_260px] flex-col gap-3 md:gap-3.5">
-            <span className="self-start rounded-full bg-white px-3 py-1.5 text-xs font-bold text-brand">
-              Promo pembukaan
-            </span>
-            <h1 className="text-2xl leading-tight font-extrabold tracking-tight md:text-[44px]">
-              Belanja lagi, hemat lagi.
-            </h1>
-            <p className="max-w-105 text-sm leading-relaxed text-[#DCE5FF] md:text-base">
-              Barang pilihan yang sudah kami kurasi, plus ebook praktis yang langsung bisa diunduh. Bayar pakai
-              QRIS, transfer, atau COD.
-            </p>
-            <div className="mt-1 flex flex-wrap gap-3">
-              <Link
-                href="#pilihan"
-                className="flex h-11 items-center rounded-[14px] bg-accent px-5 text-sm font-bold text-ink hover:bg-accent-dark md:h-12.5 md:text-[15px]"
-              >
-                Belanja Sekarang
-              </Link>
-              <Link
-                href="/kategori/ebook"
-                className="flex h-11 items-center rounded-[14px] border-[1.5px] border-[#8FA8F5] px-5 text-sm font-bold text-white hover:bg-white/10 md:h-12.5 md:text-[15px]"
-              >
-                Lihat Ebook
-              </Link>
-            </div>
-          </div>
-          <div aria-hidden="true" className="relative hidden items-end gap-3.5 sm:flex">
-            <div className="flex h-42.5 w-32.5 -rotate-6 items-center justify-center rounded-2xl bg-white text-brand shadow-[0_16px_32px_rgba(10,30,90,0.3)]">
-              <Icon name="book" size={56} strokeWidth={1.5} />
-            </div>
-            <div className="flex h-35 w-27.5 rotate-[8deg] items-center justify-center rounded-2xl bg-accent text-ink shadow-[0_16px_32px_rgba(10,30,90,0.3)]">
-              <Icon name="bag" size={48} strokeWidth={1.5} />
-            </div>
+      <section className="grid gap-4 lg:grid-cols-[1fr_340px] lg:gap-5">
+        <div className="flex flex-col justify-center gap-4 rounded-3xl bg-brand p-6 text-white md:p-11">
+          <h1 className="text-[28px] leading-tight font-extrabold tracking-tight md:text-5xl">
+            Mau <span className="marker-tag">tumbas</span> apa hari ini?
+          </h1>
+          <p className="max-w-110 text-[15px] leading-relaxed text-[#DCE5FF] md:text-base">
+            Barang yang sudah kami pilih, plus ebook praktis. Bayar pakai QRIS, transfer bank, atau COD untuk barang
+            fisik.
+          </p>
+          <div className="mt-1 flex flex-wrap gap-3">
+            <Link
+              href="#pilihan"
+              className="flex h-12 items-center rounded-xl bg-accent px-5 text-[15px] font-bold text-ink hover:bg-accent-dark focus-visible:outline-white"
+            >
+              Lihat pilihan kurasi
+            </Link>
+            <Link
+              href="/kategori/ebook"
+              className="flex h-12 items-center rounded-xl border-2 border-white px-5 text-[15px] font-bold text-white hover:bg-white hover:text-brand focus-visible:outline-white"
+            >
+              Lihat ebook
+            </Link>
           </div>
         </div>
 
-        <div className="flex flex-[1_1_300px] flex-col gap-5 max-md:hidden">
-          <Link
-            href="/kategori/paket-kado"
-            className="flex min-h-40 flex-1 flex-col justify-between gap-3 rounded-3xl bg-[#FFF1D6] p-6.5"
-          >
-            <span className="flex flex-col gap-1.5">
-              <span className="text-xs font-bold text-[#8A5300]">Paket bundling</span>
-              <span className="text-[22px] leading-tight font-extrabold">Paket Siap Ngekos</span>
-              <span className="text-[13px] text-[#5B4A2A]">Perlengkapan kos + ebook hemat dalam satu paket.</span>
-            </span>
-            <span className="text-sm font-bold text-brand">Lihat paket →</span>
-          </Link>
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
           <Link
             href="/kategori/ebook"
-            className="flex min-h-40 flex-1 flex-col justify-between gap-3 rounded-3xl bg-[#E3F6EE] p-6.5"
+            className="flex flex-col gap-1.5 rounded-[20px] border border-line bg-white p-5 hover:border-brand"
           >
-            <span className="flex flex-col gap-1.5">
-              <span className="text-xs font-bold text-[#1F6B45]">Ebook</span>
-              <span className="text-[22px] leading-tight font-extrabold">Bayar, langsung unduh</span>
-              <span className="text-[13px] text-[#2F5443]">Link unduhan muncul setelah pembayaran dikonfirmasi.</span>
+            <span className="flex items-center gap-2 font-bold">
+              <Icon name="download" size={20} className="text-brand" /> Ebook
             </span>
-            <span className="text-sm font-bold text-brand">Lihat ebook →</span>
+            <span className="text-sm leading-relaxed text-muted">
+              Link unduh muncul di halaman pesanan setelah pembayaran kamu dikonfirmasi admin.
+            </span>
+          </Link>
+          <Link
+            href="/cara-belanja"
+            className="flex flex-col gap-1.5 rounded-[20px] border border-line bg-white p-5 hover:border-brand"
+          >
+            <span className="flex items-center gap-2 font-bold">
+              <Icon name="truck" size={20} className="text-brand" /> Barang fisik
+            </span>
+            <span className="text-sm leading-relaxed text-muted">
+              Bisa bayar di tempat (COD). Nomor resi muncul di halaman pesanan begitu barang dikirim.
+            </span>
           </Link>
         </div>
       </section>
 
-      <section id="kategori" className="flex scroll-mt-6 flex-col gap-4">
-        <h2 className="text-lg font-extrabold md:text-2xl">Kategori</h2>
-        <CategoryTiles categories={categories} />
-      </section>
+      {categories.length > 0 && (
+        <section id="kategori" aria-labelledby="kategori-title" className="flex scroll-mt-6 flex-col gap-3">
+          <h2 id="kategori-title" className="text-lg font-extrabold md:text-xl">Kategori</h2>
+          <CategoryTiles categories={categories} />
+        </section>
+      )}
 
-      <section id="pilihan" className="flex scroll-mt-6 flex-col gap-4">
-        <div className="flex items-baseline justify-between gap-4">
-          <h2 className="text-lg font-extrabold md:text-2xl">Pilihan Kurasi</h2>
-          <Link href="/cari" className="text-[13px] font-semibold text-brand hover:text-brand-dark md:text-sm">
-            Lihat semua
+      <section id="pilihan" aria-labelledby="pilihan-title" className="flex scroll-mt-6 flex-col gap-4">
+        <div className="flex items-end justify-between gap-4">
+          <h2 id="pilihan-title" className="text-xl font-extrabold md:text-3xl">Pilihan kurasi</h2>
+          <Link href="/cari" className="flex min-h-11 items-center text-sm font-semibold text-brand hover:underline">
+            Semua produk
           </Link>
         </div>
         <ProductGrid products={featured} />
       </section>
 
       {ebooks.length > 0 && (
-        <section className="flex flex-col gap-4">
-          <div className="flex items-baseline justify-between gap-4">
-            <h2 className="text-lg font-extrabold md:text-2xl">Ebook Praktis</h2>
-            {ebookCategory && (
-              <Link href="/kategori/ebook" className="text-[13px] font-semibold text-brand hover:text-brand-dark md:text-sm">
-                Lihat semua
-              </Link>
-            )}
+        <section aria-labelledby="ebook-title" className="grid gap-4 rounded-3xl border border-line bg-white p-5 md:grid-cols-[260px_1fr] md:gap-10 md:p-8">
+          <div className="flex flex-col gap-2">
+            <h2 id="ebook-title" className="text-xl font-extrabold md:text-2xl">Ebook</h2>
+            <p className="text-sm leading-relaxed text-muted">
+              Format PDF. Tidak ada pengiriman, file diunduh dari halaman pesanan.
+            </p>
+            <Link href="/kategori/ebook" className="flex min-h-11 items-center text-sm font-semibold text-brand hover:underline">
+              Semua ebook
+            </Link>
           </div>
-          <ProductGrid products={ebooks} />
+          <ul className="grid md:grid-cols-2 md:gap-x-8">
+            {ebooks.map((p) => (
+              <EbookRow key={p.id} product={p} />
+            ))}
+          </ul>
         </section>
       )}
 
-      <section className="flex flex-col gap-4">
-        <h2 className="text-lg font-extrabold md:text-2xl">Kenapa tumbas di tumbasmalih?</h2>
-        <div className="grid gap-4 md:grid-cols-3">
-          {reasons.map((r) => (
-            <div key={r.title} className="flex flex-col gap-2.5 rounded-[20px] border border-line bg-white p-6">
-              <span className="flex size-11.5 items-center justify-center rounded-[14px] bg-brand-soft text-brand">
-                <Icon name={r.icon} size={22} />
-              </span>
-              <h3 className="text-[17px] font-bold">{r.title}</h3>
-              <p className="text-sm leading-relaxed text-muted">{r.body}</p>
-            </div>
+      <section aria-labelledby="kenapa-title" className="grid gap-6 md:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] md:gap-12">
+        <h2 id="kenapa-title" className="text-xl leading-snug font-extrabold md:text-3xl">
+          Kenapa <span className="marker">tumbas</span> di sini?
+        </h2>
+        <ol className="flex flex-col">
+          {reasons.map((r, i) => (
+            <li key={r.title} className="flex gap-4 border-t border-line py-4 first:border-t-0 first:pt-0">
+              <span className="w-6 shrink-0 text-lg font-extrabold text-brand" aria-hidden="true">{i + 1}</span>
+              <div className="flex flex-col gap-1">
+                <h3 className="font-bold">{r.title}</h3>
+                <p className="text-sm leading-relaxed text-muted">{r.body}</p>
+              </div>
+            </li>
           ))}
-        </div>
+        </ol>
       </section>
     </div>
   );

@@ -6,10 +6,12 @@ import { formatRupiah } from "@/lib/format";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { AdminProduct } from "@/lib/types";
 
+export const metadata = { title: "Produk | Admin" };
+
 async function ProductList({ searchParams }: { searchParams: PageProps<"/admin/produk">["searchParams"] }) {
   await requireAdmin();
   const sp = await searchParams;
-  const { data } = await createAdminClient()
+  const { data, error } = await createAdminClient()
     .from("products")
     .select("id, slug, name, type, price, source_price, stock, is_active, is_featured")
     .order("created_at", { ascending: false });
@@ -19,10 +21,15 @@ async function ProductList({ searchParams }: { searchParams: PageProps<"/admin/p
     <div className="flex flex-col gap-5">
       <div className="flex items-center justify-between gap-4">
         <h1 className="text-2xl font-extrabold">Produk</h1>
-        <Link href="/admin/produk/baru" className="flex h-10 items-center rounded-xl bg-brand px-4 text-sm font-bold text-white hover:bg-brand-dark">
+        <Link href="/admin/produk/baru" className="flex h-11 items-center rounded-xl bg-brand px-4 text-sm font-bold text-white hover:bg-brand-dark">
           + Tambah produk
         </Link>
       </div>
+      {error && (
+        <p role="alert" className="rounded-xl border border-danger bg-[#FDECEC] px-4 py-3 text-sm font-medium text-danger">
+          Gagal memuat produk: {error.message}. Muat ulang halaman; kalau masih gagal, cek koneksi Supabase di env.
+        </p>
+      )}
       {sp.disimpan === "1" && <p role="status" className="rounded-xl bg-[#E3F6EE] px-4 py-3 text-sm font-semibold text-ok">Produk disimpan.</p>}
       <div className="overflow-x-auto rounded-2xl border border-line bg-white">
         <table className="w-full min-w-180 text-left text-sm">
@@ -52,7 +59,11 @@ async function ProductList({ searchParams }: { searchParams: PageProps<"/admin/p
             ))}
           </tbody>
         </table>
-        {products.length === 0 && <p className="p-8 text-center text-sm text-muted">Belum ada produk.</p>}
+        {products.length === 0 && !error && (
+          <p className="p-8 text-center text-sm text-muted">
+            Belum ada produk. <Link href="/admin/produk/baru" className="font-bold text-brand hover:underline">Tambah produk pertama</Link>
+          </p>
+        )}
       </div>
     </div>
   );

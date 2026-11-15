@@ -19,7 +19,7 @@ export function MobileNavView({ pathname }: { pathname: string }) {
   return (
     <nav
       aria-label="Navigasi utama"
-      className="fixed inset-x-0 bottom-0 z-30 grid h-19.5 grid-cols-4 items-center border-t border-line bg-white pb-1.5 md:hidden"
+      className="fixed inset-x-0 bottom-0 z-30 grid h-19.5 grid-cols-4 items-stretch border-t border-line bg-white pb-1.5 md:hidden"
     >
       {items.map((it) => {
         const active = it.match(pathname);
@@ -28,7 +28,7 @@ export function MobileNavView({ pathname }: { pathname: string }) {
             key={it.href}
             href={it.href}
             aria-current={active ? "page" : undefined}
-            className={`flex flex-col items-center gap-1 text-[11px] ${active ? "font-bold text-brand" : "font-semibold text-muted"}`}
+            className={`flex h-full flex-col items-center justify-center gap-1 text-[11px] ${active ? "font-bold text-brand" : "font-semibold text-muted"}`}
           >
             <Icon name={it.icon} size={22} strokeWidth={active ? 2.2 : 1.8} />
             {it.label}

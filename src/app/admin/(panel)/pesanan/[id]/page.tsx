@@ -10,6 +10,8 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import type { Order, OrderItem } from "@/lib/types";
 import { updateOrder } from "../../../actions";
 
+export const metadata = { title: "Detail pesanan | Admin" };
+
 type ItemWithSource = OrderItem & { products: { source_url: string | null; source_price: number | null; file_path: string | null } | null };
 
 async function OrderDetail({ params, searchParams }: PageProps<"/admin/pesanan/[id]">) {
@@ -107,7 +109,7 @@ async function OrderDetail({ params, searchParams }: PageProps<"/admin/pesanan/[
           <h2 className="font-bold">Ubah status</h2>
           <label className="flex flex-col gap-1.5 text-sm font-semibold">
             Status
-            <select name="status" defaultValue={order.status} className="h-11 rounded-xl border border-line bg-white px-3 outline-none focus:border-brand">
+            <select name="status" defaultValue={order.status} className="h-11 rounded-lg border border-field bg-white px-3">
               {statusOrder.map((s) => (
                 <option key={s} value={s}>{statusLabels[s]}</option>
               ))}
@@ -115,7 +117,7 @@ async function OrderDetail({ params, searchParams }: PageProps<"/admin/pesanan/[
           </label>
           <label className="flex flex-col gap-1.5 text-sm font-semibold">
             Nomor resi
-            <input name="tracking_number" defaultValue={order.tracking_number ?? ""} className="h-11 rounded-xl border border-line px-3 outline-none focus:border-brand" />
+            <input name="tracking_number" defaultValue={order.tracking_number ?? ""} className="h-11 rounded-lg border border-field px-3" />
           </label>
           <p className="text-xs leading-relaxed text-muted">
             Status <strong>Sudah dibayar</strong> ke atas membuka tombol unduh ebook di halaman pembeli.

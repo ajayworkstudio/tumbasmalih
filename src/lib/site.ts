@@ -2,12 +2,22 @@ import type { OrderStatus, PaymentMethod } from "./types";
 
 export const site = {
   name: "tumbasmalih",
-  tagline: "Belanja lagi, hemat lagi.",
+  tagline: "Barang pilihan, bayar gampang.",
   description:
-    "Etalase kurasi barang dan ebook pilihan. Bayar mudah pakai QRIS, transfer bank, atau COD.",
+    "Etalase kurasi barang dan ebook pilihan. Bayar pakai QRIS, transfer bank, atau COD untuk barang fisik.",
   url: (process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000").replace(/\/$/, ""),
   whatsapp: process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ?? "",
   qrisImageUrl: process.env.NEXT_PUBLIC_QRIS_IMAGE_URL ?? "",
+};
+
+/**
+ * Kebijakan toko. Isi dengan kebijakan yang benar-benar kamu jalankan; selama masih kosong,
+ * halaman menampilkan placeholder [ISI ...] supaya tidak ada janji yang dikarang.
+ */
+export const policy = {
+  shippingTime: process.env.NEXT_PUBLIC_POLICY_SHIPPING ?? "",
+  returns: process.env.NEXT_PUBLIC_POLICY_RETURNS ?? "",
+  ebookRefund: process.env.NEXT_PUBLIC_POLICY_EBOOK ?? "",
 };
 
 /** Ongkir flat per pesanan yang berisi barang fisik (rupiah). Final dikonfirmasi admin. */

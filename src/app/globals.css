@@ -1,29 +1,94 @@
 @import "tailwindcss";
 
+/* Token warna dan alasannya ada di DESIGN.md. */
 @theme {
   --font-sans: "Plus Jakarta Sans Variable", ui-sans-serif, system-ui, sans-serif;
 
   --color-brand: #1f4fe0;
   --color-brand-dark: #1639a8;
   --color-brand-soft: #eef2fc;
+  --color-brand-tint: #e7eeff;
   --color-accent: #ffd23f;
   --color-accent-dark: #f5c000;
+  --color-accent-tint: #fff1d6;
   --color-ink: #111827;
   --color-muted: #5b6474;
   --color-line: #e3e8f2;
+  --color-field: #7c8799;
   --color-ground: #f4f7fd;
   --color-warn: #b4410c;
   --color-ok: #1f7a4d;
-  --color-danger: #d92d33;
+  --color-danger: #b42318;
+  --color-wa: #147a3e;
   --color-navy: #0f1b3d;
 }
 
-body {
-  background: var(--color-ground);
-  color: var(--color-ink);
+@layer base {
+  body {
+    background: var(--color-ground);
+    color: var(--color-ink);
+  }
+
+  /* Tailwind 4 mengembalikan cursor tombol ke default; kontrol aktif harus terlihat bisa diklik. */
+  a[href],
+  button:not(:disabled),
+  summary,
+  select:not(:disabled),
+  label[for],
+  label:has(> input[type="checkbox"], > input[type="radio"]),
+  input[type="checkbox"]:not(:disabled),
+  input[type="radio"]:not(:disabled) {
+    cursor: pointer;
+  }
+  button:disabled,
+  select:disabled,
+  input:disabled {
+    cursor: not-allowed;
+  }
+
+  button:not(:disabled):active,
+  a[href]:active {
+    transform: translateY(1px);
+  }
+
+  :focus-visible {
+    outline: 3px solid var(--color-brand);
+    outline-offset: 2px;
+  }
+  .on-dark :focus-visible {
+    outline-color: var(--color-accent);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+    button:not(:disabled):active,
+    a[href]:active {
+      transform: none;
+    }
+  }
 }
 
-/* Sembunyikan scrollbar untuk baris chip/kartu yang bisa digeser */
+/* Motif identitas: stabilo kuning di bawah satu kata kunci per layar. */
+.marker {
+  background-image: linear-gradient(transparent 62%, var(--color-accent) 62%, var(--color-accent) 92%, transparent 92%);
+  padding-inline: 0.08em;
+}
+/* Versi di atas latar gelap: kata ditulis ink di atas blok kuning supaya kontrasnya tetap tinggi. */
+.marker-tag {
+  background: var(--color-accent);
+  color: var(--color-ink);
+  padding: 0 0.18em;
+  border-radius: 0.18em;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+
 .no-scrollbar {
   scrollbar-width: none;
 }

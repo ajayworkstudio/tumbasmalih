@@ -1,9 +1,8 @@
--- tumbasmalih — skema database
+-- Skema database tumbasmalih.
 -- Jalankan sekali di Supabase: Dashboard › SQL Editor › New query › tempel › Run.
 
 create extension if not exists pgcrypto;
 
--- ───────────────────────── Kategori ─────────────────────────
 create table if not exists public.categories (
   id uuid primary key default gen_random_uuid(),
   slug text not null unique,
@@ -13,7 +12,6 @@ create table if not exists public.categories (
   sort integer not null default 0
 );
 
--- ───────────────────────── Produk ─────────────────────────
 create table if not exists public.products (
   id uuid primary key default gen_random_uuid(),
   slug text not null unique,
@@ -27,7 +25,7 @@ create table if not exists public.products (
   stock integer check (stock >= 0),                    -- null = tidak dibatasi
   is_active boolean not null default true,
   is_featured boolean not null default false,
-  -- Kolom internal (TIDAK terbaca publik):
+  -- Kolom internal, tidak bisa dibaca publik:
   file_path text,       -- path file ebook di bucket privat "ebooks"
   source_url text,      -- link produk di marketplace untuk dipesankan
   source_price integer, -- harga modal di marketplace
@@ -38,7 +36,6 @@ create table if not exists public.products (
 create index if not exists products_category_idx on public.products (category_id);
 create index if not exists products_active_idx on public.products (is_active, is_featured);
 
--- ───────────────────────── Pesanan ─────────────────────────
 create table if not exists public.orders (
   id uuid primary key default gen_random_uuid(),
   code text not null unique,
@@ -79,7 +76,6 @@ create table if not exists public.order_items (
 
 create index if not exists order_items_order_idx on public.order_items (order_id);
 
--- ───────────────────────── updated_at otomatis ─────────────────────────
 create or replace function public.set_updated_at()
 returns trigger language plpgsql as $$
 begin
@@ -96,8 +92,7 @@ drop trigger if exists orders_updated_at on public.orders;
 create trigger orders_updated_at before update on public.orders
   for each row execute function public.set_updated_at();
 
--- ───────────────────────── Keamanan (RLS) ─────────────────────────
--- Publik hanya boleh MEMBACA kategori & produk aktif.
+-- Publik hanya bisa membaca kategori dan produk aktif.
 -- Pesanan hanya diakses server lewat service role (tanpa policy = tertutup untuk publik).
 alter table public.categories enable row level security;
 alter table public.products enable row level security;
@@ -119,8 +114,7 @@ grant select (
   image_url, stock, is_active, is_featured, created_at
 ) on public.products to anon, authenticated;
 
--- ───────────────────────── Storage ─────────────────────────
--- "produk": gambar produk, publik.  "ebooks": file ebook, PRIVAT (diunduh lewat link bertanda tangan).
+-- "produk" untuk gambar produk (publik). "ebooks" untuk file ebook (privat, diunduh lewat link bertanda tangan).
 insert into storage.buckets (id, name, public)
 values ('produk', 'produk', true), ('ebooks', 'ebooks', false)
 on conflict (id) do nothing;

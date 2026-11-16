@@ -7,6 +7,7 @@ import { requireAdmin } from "@/lib/auth";
 import { normalizePhone, slugify } from "@/lib/format";
 import { statusOrder } from "@/lib/site";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { hasSupabaseEnv } from "@/lib/supabase/env";
 import { createSessionClient } from "@/lib/supabase/server";
 import type { OrderStatus } from "@/lib/types";
 
@@ -231,6 +232,12 @@ export async function signIn(_prev: LoginState, formData: FormData): Promise<Log
   const email = text(formData, "email", 150).toLowerCase();
   const password = typeof formData.get("password") === "string" ? (formData.get("password") as string) : "";
   if (!email || !password) return { error: "Isi email dan password.", email };
+  if (!hasSupabaseEnv()) {
+    return {
+      error: "Deployment ini tidak membaca env Supabase. Isi NEXT_PUBLIC_SUPABASE_URL dan NEXT_PUBLIC_SUPABASE_ANON_KEY di Vercel (Production), lalu Redeploy.",
+      email,
+    };
+  }
 
   let supabase: Awaited<ReturnType<typeof createSessionClient>>;
   let error: { message: string } | null;

@@ -232,10 +232,23 @@ export async function signIn(_prev: LoginState, formData: FormData): Promise<Log
   const password = typeof formData.get("password") === "string" ? (formData.get("password") as string) : "";
   if (!email || !password) return { error: "Isi email dan password.", email };
 
-  const supabase = await createSessionClient();
-  const { error } = await supabase.auth.signInWithPassword({ email, password });
+  let supabase: Awaited<ReturnType<typeof createSessionClient>>;
+  let error: { message: string } | null;
+  try {
+    supabase = await createSessionClient();
+    ({ error } = await supabase.auth.signInWithPassword({ email, password }));
+  } catch (e) {
+    console.error("signIn:", e);
+    return {
+      error: "Server tidak bisa menghubungi Supabase. Cek env NEXT_PUBLIC_SUPABASE_URL dan NEXT_PUBLIC_SUPABASE_ANON_KEY di Vercel, lalu redeploy.",
+      email,
+    };
+  }
   if (error) {
-    const msg = /confirm/i.test(error.message)
+    const unreachable = /fetch|network|ECONNREFUSED/i.test(error.message);
+    const msg = unreachable
+      ? "Server tidak bisa menghubungi Supabase. Cek env Supabase di Vercel dan pastikan project Supabase tidak sedang di-pause."
+      : /confirm/i.test(error.message)
       ? "Email admin belum dikonfirmasi. Di Supabase › Authentication › Users, buat ulang user dengan Auto Confirm User dicentang."
       : "Email atau password salah.";
     return { error: msg, email };

@@ -1,11 +1,22 @@
 import type { OrderStatus, PaymentMethod } from "./types";
 
+/** Terima "tumbasmalih.com" maupun "https://tumbasmalih.com/"; nilai rusak jatuh ke localhost. */
+function siteUrl(raw: string | undefined): string {
+  const value = (raw ?? "").trim();
+  if (!value) return "http://localhost:3000";
+  try {
+    return new URL(/^https?:\/\//.test(value) ? value : `https://${value}`).origin;
+  } catch {
+    return "http://localhost:3000";
+  }
+}
+
 export const site = {
   name: "tumbasmalih",
   tagline: "Barang pilihan, bayar gampang.",
   description:
     "Etalase kurasi barang dan ebook pilihan. Bayar pakai QRIS, transfer bank, atau COD untuk barang fisik.",
-  url: (process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000").replace(/\/$/, ""),
+  url: siteUrl(process.env.NEXT_PUBLIC_SITE_URL),
   /** Cadangan untuk halaman error saat database tidak bisa dibaca. Nomor utama diatur di /admin/pengaturan. */
   whatsappFallback: process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ?? "",
 };

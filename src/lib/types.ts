@@ -23,9 +23,13 @@ export type Product = {
   is_featured: boolean;
 };
 
+/** Produk untuk halaman detail, dengan semua foto galeri. */
+export type ProductDetail = Product & { images: string[] };
+
 /** Produk lengkap untuk admin. */
 export type AdminProduct = Product & {
   is_active: boolean;
+  images?: string[] | null;
   file_path: string | null;
   source_url: string | null;
   source_price: number | null;

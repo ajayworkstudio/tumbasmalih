@@ -2,6 +2,7 @@
 import { startTransition, useActionState, useState } from "react";
 import type { AdminProduct, Category } from "@/lib/types";
 import { saveProduct, type ProductFormState } from "../../actions";
+import { GalleryUploader } from "../GalleryUploader";
 import { Uploader } from "../Uploader";
 
 const input = "h-11 rounded-lg border border-field bg-white px-3 text-sm";
@@ -41,12 +42,8 @@ export function ProductForm({ product, categories }: { product?: AdminProduct; c
           Deskripsi
           <textarea name="description" rows={6} defaultValue={dv("description", product?.description)} className="rounded-lg border border-field px-3 py-2.5 text-sm" />
         </label>
-        <Uploader
-          bucket="produk"
-          name="image_url"
-          label="Foto produk"
-          hint="JPG, PNG, atau WEBP. Foto persegi paling rapi di kartu produk."
-          defaultValue={String(dv("image_url", product?.image_url))}
+        <GalleryUploader
+          defaultValue={product?.images?.length ? product.images : product?.image_url ? [product.image_url] : []}
         />
         {type === "ebook" ? (
           <Uploader

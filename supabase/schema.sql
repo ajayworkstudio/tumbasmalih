@@ -21,7 +21,8 @@ create table if not exists public.products (
   category_id uuid references public.categories (id) on delete set null,
   price integer not null check (price >= 0),          -- harga jual (rupiah)
   compare_price integer check (compare_price >= 0),   -- harga coret, opsional
-  image_url text,
+  image_url text,                                     -- foto sampul (sama dengan images[1])
+  images text[] not null default '{}',              -- semua foto, urutan tampil di galeri
   stock integer check (stock >= 0),                    -- null = tidak dibatasi
   is_active boolean not null default true,
   is_featured boolean not null default false,
@@ -32,6 +33,8 @@ create table if not exists public.products (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+
+alter table public.products add column if not exists images text[] not null default '{}';
 
 create index if not exists products_category_idx on public.products (category_id);
 create index if not exists products_active_idx on public.products (is_active, is_featured);
@@ -136,7 +139,7 @@ grant select on public.categories, public.settings to anon, authenticated;
 revoke select on public.products from anon, authenticated;
 grant select (
   id, slug, name, description, type, category_id, price, compare_price,
-  image_url, stock, is_active, is_featured, created_at
+  image_url, images, stock, is_active, is_featured, created_at
 ) on public.products to anon, authenticated;
 
 -- "produk" untuk gambar produk (publik). "ebooks" untuk file ebook (privat, diunduh lewat link bertanda tangan).

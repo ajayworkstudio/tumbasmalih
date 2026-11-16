@@ -45,6 +45,10 @@ npm run dev                  # buka http://localhost:3000
 3. Tambahkan domain `tumbasmalih.com` di **Settings › Domains** dan arahkan DNS sesuai petunjuk Vercel.
 4. Daftarkan `https://tumbasmalih.com/sitemap.xml` di Google Search Console.
 
+## Migrasi database
+
+Database yang dibuat sebelum fitur galeri foto perlu menjalankan `supabase/migrations/002-galeri-foto.sql` sekali di SQL Editor. Database baru cukup memakai `schema.sql`.
+
 ## Desain
 
 Arahan visual ada di `DESIGN.md`. Kode diaudit dengan aturan [anti-slop](https://github.com/miqdadbadjuber/anti-slop); laporannya ada di folder `anti-slop/`.
@@ -65,7 +69,7 @@ Nomor WhatsApp, rekening, QRIS, ongkir, dan kebijakan toko diisi dari `/admin/pe
 - Selama login, halaman produk di toko menampilkan tombol **Edit produk ini (admin)**.
 
 ### Menambah produk
-- Foto dan file ebook diunggah langsung dari form produk. Foto masuk bucket publik `produk`, ebook masuk bucket privat `ebooks`.
+- Satu produk bisa punya sampai 8 foto (pilih beberapa sekaligus, atur urutan, foto pertama jadi sampul). Foto masuk bucket publik `produk`, file ebook masuk bucket privat `ebooks`.
 - Link unduh ebook dibuat sementara (10 menit) dan hanya untuk pesanan yang sudah dibayar.
 - Kolom **harga modal** dan **link sumber** hanya terlihat di admin (dikunci di level database).
 

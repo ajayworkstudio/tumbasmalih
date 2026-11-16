@@ -6,7 +6,7 @@ import { AddToCartButton } from "@/components/AddToCartButton";
 import { AdminShortcut } from "@/components/AdminShortcut";
 import { Icon } from "@/components/Icon";
 import { ProductGrid, productTag } from "@/components/ProductCard";
-import { ProductImage } from "@/components/ProductImage";
+import { ProductGallery } from "@/components/ProductGallery";
 import { BlockSkeleton } from "@/components/Skeleton";
 import { TrackEvent } from "@/components/TrackEvent";
 import { getCategories, getProductBySlug, getProducts } from "@/lib/data";
@@ -23,7 +23,7 @@ export async function generateMetadata({ params }: PageProps<"/produk/[slug]">):
     title: p.name,
     description,
     alternates: { canonical: `/produk/${p.slug}` },
-    openGraph: { title: p.name, description, images: p.image_url ? [p.image_url] : undefined },
+    openGraph: { title: p.name, description, images: p.images.length ? p.images.slice(0, 4) : undefined },
   };
 }
 
@@ -47,7 +47,7 @@ async function ProductDetail({ params }: { params: PageProps<"/produk/[slug]">["
     "@type": "Product",
     name: product.name,
     description: product.description || undefined,
-    image: product.image_url ? [product.image_url] : undefined,
+    image: product.images.length ? product.images : undefined,
     url: `${site.url}/produk/${product.slug}`,
     offers: {
       "@type": "Offer",
@@ -79,9 +79,7 @@ async function ProductDetail({ params }: { params: PageProps<"/produk/[slug]">["
       </nav>
 
       <div className="grid gap-6 md:grid-cols-2 md:gap-10">
-        <div className="aspect-square overflow-hidden rounded-3xl border border-line bg-white">
-          <ProductImage src={product.image_url} alt={product.name} type={product.type} iconSize={96} priority />
-        </div>
+        <ProductGallery images={product.images} name={product.name} type={product.type} />
         <div className="flex flex-col gap-4">
           {productTag(product) && <span className="text-sm font-semibold text-warn">{productTag(product)}</span>}
           <h1 className="text-2xl leading-tight font-extrabold md:text-[32px]">{product.name}</h1>

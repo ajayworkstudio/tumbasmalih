@@ -2,7 +2,7 @@ import "server-only";
 import { cacheLife, cacheTag } from "next/cache";
 import { createPublicClient } from "./supabase/public";
 import { hasSupabaseEnv } from "./supabase/env";
-import type { Category, Product } from "./types";
+import type { Category, Product, ProductDetail } from "./types";
 
 /** Kolom publik produk. Harus sama dengan GRANT di supabase/schema.sql. */
 export const PUBLIC_PRODUCT_COLUMNS =
@@ -62,17 +62,20 @@ export async function getProducts(query: ProductQuery = {}): Promise<Product[]> 
   return (data ?? []) as Product[];
 }
 
-export async function getProductBySlug(slug: string): Promise<Product | null> {
+export async function getProductBySlug(slug: string): Promise<ProductDetail | null> {
   "use cache";
   cacheLife("minutes");
   cacheTag("catalog");
   if (!hasSupabaseEnv()) return null;
-  const { data, error } = await createPublicClient()
-    .from("products")
-    .select(PUBLIC_PRODUCT_COLUMNS)
-    .eq("is_active", true)
-    .eq("slug", slug)
-    .maybeSingle();
+  const query = (columns: string) =>
+    createPublicClient().from("products").select(columns).eq("is_active", true).eq("slug", slug).maybeSingle();
+
+  let { data, error } = await query(`${PUBLIC_PRODUCT_COLUMNS}, images`);
+  // Database yang belum menjalankan migrasi galeri belum punya kolom images: tetap tampil dengan foto sampul.
+  if (error?.code === "42703") ({ data, error } = await query(PUBLIC_PRODUCT_COLUMNS));
   if (error) throw new Error(`Gagal memuat produk: ${error.message}`);
-  return data as Product | null;
+  if (!data) return null;
+  const p = data as unknown as Product & { images?: string[] | null };
+  const images = p.images?.length ? p.images : p.image_url ? [p.image_url] : [];
+  return { ...p, images };
 }

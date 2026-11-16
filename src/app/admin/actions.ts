@@ -71,6 +71,11 @@ export async function saveProduct(_prev: ProductFormState, formData: FormData): 
   const stock = intOrNull(formData, "stock");
   const sourcePrice = intOrNull(formData, "source_price");
   const categoryId = text(formData, "category_id", 40) || null;
+  const images = formData
+    .getAll("images")
+    .filter((v): v is string => typeof v === "string" && /^https?:\/\//.test(v))
+    .map((v) => v.slice(0, 500))
+    .slice(0, 8);
 
   if (name.length < 3) return { error: "Nama produk minimal 3 karakter.", values };
   if (!slug) return { error: "Slug tidak valid.", values };
@@ -89,7 +94,8 @@ export async function saveProduct(_prev: ProductFormState, formData: FormData): 
     stock: type === "ebook" ? null : stock,
     category_id: categoryId,
     description: text(formData, "description", 5000),
-    image_url: text(formData, "image_url", 500) || null,
+    image_url: images[0] ?? null,
+    images,
     file_path: type === "ebook" ? text(formData, "file_path", 300) || null : null,
     source_url: text(formData, "source_url", 500) || null,
     source_price: sourcePrice,
@@ -104,6 +110,9 @@ export async function saveProduct(_prev: ProductFormState, formData: FormData): 
 
   if (error) {
     if (error.code === "23505") return { error: `Slug "${slug}" sudah dipakai produk lain. Ganti slug-nya.`, values };
+    if (error.code === "42703" || /images/.test(error.message)) {
+      return { error: "Kolom galeri foto belum ada di database. Jalankan supabase/migrations/002-galeri-foto.sql di SQL Editor Supabase, lalu simpan lagi.", values };
+    }
     console.error("saveProduct:", error.message);
     return { error: "Gagal menyimpan produk.", values };
   }

@@ -20,8 +20,9 @@ export const telegramConfig = {
   apiBase: (process.env.TELEGRAM_API_BASE ?? "https://api.telegram.org").replace(/\/$/, ""),
 };
 
+/** Cukup token + secret supaya webhook bisa dipasang. Tanpa ID yang diizinkan, bot hanya membalas /start dengan ID pengirim. */
 export function telegramReady(): boolean {
-  return Boolean(telegramConfig.token && telegramConfig.secret && telegramConfig.allowedIds.length);
+  return Boolean(telegramConfig.token && telegramConfig.secret);
 }
 
 export function isAllowed(userId: number | string | undefined): boolean {

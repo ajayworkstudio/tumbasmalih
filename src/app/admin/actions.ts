@@ -286,7 +286,7 @@ export async function connectTelegram(): Promise<TelegramState> {
   const { BOT_COMMANDS } = await import("@/lib/telegram/router");
   const { site } = await import("@/lib/site");
   if (!telegramReady()) {
-    return { error: "Env TELEGRAM_BOT_TOKEN, TELEGRAM_WEBHOOK_SECRET, dan TELEGRAM_ALLOWED_IDS belum lengkap di Vercel." };
+    return { error: "Env TELEGRAM_BOT_TOKEN dan TELEGRAM_WEBHOOK_SECRET belum diisi di Vercel, atau belum Redeploy setelah diisi." };
   }
   if (!site.url.startsWith("https://")) {
     return { error: `Telegram butuh alamat https. NEXT_PUBLIC_SITE_URL sekarang ${site.url}.` };
@@ -299,5 +299,9 @@ export async function connectTelegram(): Promise<TelegramState> {
   });
   if (hook === null) return { error: "Telegram menolak setWebhook. Cek TELEGRAM_BOT_TOKEN, lalu coba lagi." };
   await tg("setMyCommands", { commands: BOT_COMMANDS });
-  return { ok: `Bot tersambung ke ${site.url}/api/telegram. Coba kirim /bantuan ke bot.` };
+  return {
+    ok: telegramConfig.allowedIds.length
+      ? `Bot tersambung ke ${site.url}/api/telegram. Coba kirim /bantuan ke bot.`
+      : "Bot tersambung. Kirim /start ke bot untuk melihat ID Telegram-mu, isi ke TELEGRAM_ALLOWED_IDS, lalu Redeploy.",
+  };
 }

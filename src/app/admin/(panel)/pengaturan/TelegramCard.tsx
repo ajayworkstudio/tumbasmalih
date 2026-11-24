@@ -2,7 +2,17 @@
 import { useActionState } from "react";
 import { connectTelegram, type TelegramState } from "../../actions";
 
-export function TelegramCard({ ready, webhookUrl, lastError }: { ready: boolean; webhookUrl: string; lastError: string }) {
+export function TelegramCard({
+  ready,
+  owners,
+  webhookUrl,
+  lastError,
+}: {
+  ready: boolean;
+  owners: number;
+  webhookUrl: string;
+  lastError: string;
+}) {
   const [state, action, pending] = useActionState<TelegramState>(async () => connectTelegram(), {});
   return (
     <section aria-labelledby="tg-title" className="flex flex-col gap-3 rounded-2xl border border-line bg-white p-5">
@@ -14,7 +24,13 @@ export function TelegramCard({ ready, webhookUrl, lastError }: { ready: boolean;
       </div>
       <dl className="grid gap-1 text-sm sm:grid-cols-[160px_1fr]">
         <dt className="text-muted">Env bot</dt>
-        <dd className={ready ? "font-semibold text-ok" : "font-semibold text-danger"}>{ready ? "Lengkap" : "Belum lengkap"}</dd>
+        <dd className={ready ? "font-semibold text-ok" : "font-semibold text-danger"}>
+          {ready ? "Token dan secret terisi" : "TELEGRAM_BOT_TOKEN atau TELEGRAM_WEBHOOK_SECRET belum diisi"}
+        </dd>
+        <dt className="text-muted">Pengguna diizinkan</dt>
+        <dd className={owners ? "font-semibold text-ok" : "font-medium text-danger"}>
+          {owners ? `${owners} ID` : "Belum ada. Hubungkan bot, kirim /start, isi TELEGRAM_ALLOWED_IDS, lalu Redeploy."}
+        </dd>
         <dt className="text-muted">Webhook terdaftar</dt>
         <dd className="break-all">{webhookUrl || "Belum ada"}</dd>
         {lastError && (

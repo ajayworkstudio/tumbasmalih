@@ -5,7 +5,7 @@ import type { Settings } from "@/lib/settings";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { SettingsForm } from "./SettingsForm";
 import { TelegramCard } from "./TelegramCard";
-import { telegramReady, tg } from "@/lib/telegram/api";
+import { telegramConfig, telegramReady, tg } from "@/lib/telegram/api";
 
 export const metadata = { title: "Pengaturan | Admin" };
 
@@ -30,7 +30,7 @@ async function TelegramLoader() {
   await requireAdmin();
   const ready = telegramReady();
   const info = ready ? await tg<{ url: string; last_error_message?: string }>("getWebhookInfo", {}) : null;
-  return <TelegramCard ready={ready} webhookUrl={info?.url ?? ""} lastError={info?.last_error_message ?? ""} />;
+  return <TelegramCard ready={ready} owners={telegramConfig.allowedIds.length} webhookUrl={info?.url ?? ""} lastError={info?.last_error_message ?? ""} />;
 }
 
 export default function SettingsPage() {

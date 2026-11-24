@@ -60,9 +60,9 @@ Aksi yang mengubah uang atau tampilan toko (tandai dibayar, batalkan, sembunyika
 **Setup sekali:**
 1. Di Telegram, chat **@BotFather** → `/newbot` → beri nama (misal *Kantor tumbasmalih*) → salin token.
 2. Jalankan `supabase/migrations/003-bot.sql` di SQL Editor Supabase.
-3. Di Vercel › Environment Variables isi `TELEGRAM_BOT_TOKEN`, `TELEGRAM_WEBHOOK_SECRET` (string acak 20+ huruf/angka), `CRON_SECRET` (string acak), lalu Redeploy.
-4. Kirim `/start` ke bot. Bot membalas ID Telegram kamu. Isi `TELEGRAM_ALLOWED_IDS` dengan ID itu, lalu Redeploy lagi.
-5. Buka `/admin/pengaturan` › **Hubungkan bot**. Setelah itu kirim `/bantuan` ke bot.
+3. Di Vercel › Environment Variables isi `TELEGRAM_BOT_TOKEN`, `TELEGRAM_WEBHOOK_SECRET` (string acak 20+ huruf/angka), `CRON_SECRET` (string acak), lalu Redeploy. Pastikan `NEXT_PUBLIC_SITE_URL` berisi alamat https toko.
+4. Buka `/admin/pengaturan` › **Hubungkan bot**.
+5. Kirim `/start` ke bot. Bot membalas ID Telegram kamu. Isi `TELEGRAM_ALLOWED_IDS` dengan ID itu, lalu Redeploy lagi. Setelah itu kirim `/bantuan` ke bot.
 6. Opsional: supaya Venya menulis draf caption dan iklan dengan AI, buat API key gratis di [console.groq.com/keys](https://console.groq.com/keys), isi `GROQ_API_KEY` di Vercel, lalu Redeploy. Tanpa key, Venya memberi template.
    - Model default `openai/gpt-oss-120b`. Ganti lewat `AI_MODEL` kalau Groq memensiunkan model ini.
    - Paket gratis Groq dibatasi per menit dan per hari. Kalau kuota habis, Venya memberi template dan kamu bisa coba lagi nanti.

@@ -282,7 +282,7 @@ export type TelegramState = { error?: string; ok?: string };
 /** Daftarkan webhook dan daftar perintah bot ke Telegram. */
 export async function connectTelegram(): Promise<TelegramState> {
   await requireAdmin();
-  const { telegramConfig, telegramReady, tg } = await import("@/lib/telegram/api");
+  const { telegramConfig, telegramReady, tg, tgCall } = await import("@/lib/telegram/api");
   const { BOT_COMMANDS } = await import("@/lib/telegram/router");
   const { site } = await import("@/lib/site");
   if (!telegramReady()) {
@@ -291,17 +291,28 @@ export async function connectTelegram(): Promise<TelegramState> {
   if (!site.url.startsWith("https://")) {
     return { error: `Telegram butuh alamat https. NEXT_PUBLIC_SITE_URL sekarang ${site.url}.` };
   }
-  const hook = await tg("setWebhook", {
+  if (!/^[A-Za-z0-9_-]{1,256}$/.test(telegramConfig.secret)) {
+    return { error: "TELEGRAM_WEBHOOK_SECRET hanya boleh berisi huruf, angka, _ dan -. Ganti di Vercel tanpa simbol atau spasi, lalu Redeploy." };
+  }
+  const me = await tgCall<{ username: string }>("getMe", {});
+  if (!me.ok) {
+    return {
+      error: me.error.startsWith("401") || me.error.startsWith("404")
+        ? "Token bot ditolak Telegram. Salin ulang token dari @BotFather (format 123456789:AAH...) ke TELEGRAM_BOT_TOKEN, lalu Redeploy."
+        : `Gagal menghubungi Telegram: ${me.error}`,
+    };
+  }
+  const hook = await tgCall("setWebhook", {
     url: `${site.url}/api/telegram`,
     secret_token: telegramConfig.secret,
     allowed_updates: ["message", "callback_query"],
     drop_pending_updates: true,
   });
-  if (hook === null) return { error: "Telegram menolak setWebhook. Cek TELEGRAM_BOT_TOKEN, lalu coba lagi." };
+  if (!hook.ok) return { error: `Telegram menolak setWebhook: ${hook.error}` };
   await tg("setMyCommands", { commands: BOT_COMMANDS });
   return {
     ok: telegramConfig.allowedIds.length
-      ? `Bot tersambung ke ${site.url}/api/telegram. Coba kirim /bantuan ke bot.`
-      : "Bot tersambung. Kirim /start ke bot untuk melihat ID Telegram-mu, isi ke TELEGRAM_ALLOWED_IDS, lalu Redeploy.",
+      ? `@${me.result.username} tersambung ke ${site.url}/api/telegram. Coba kirim /bantuan ke bot.`
+      : `@${me.result.username} tersambung. Kirim /start ke bot untuk melihat ID Telegram-mu, isi ke TELEGRAM_ALLOWED_IDS, lalu Redeploy.`,
   };
 }

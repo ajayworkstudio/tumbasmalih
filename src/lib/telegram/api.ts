@@ -5,9 +5,11 @@ export type Buttons = { text: string; data?: string; url?: string }[][];
 
 export type Reply = { text: string; buttons?: Buttons };
 
+const envValue = (name: string) => (process.env[name] ?? "").trim().replace(/^["']|["']$/g, "");
+
 export const telegramConfig = {
-  token: process.env.TELEGRAM_BOT_TOKEN ?? "",
-  secret: process.env.TELEGRAM_WEBHOOK_SECRET ?? "",
+  token: envValue("TELEGRAM_BOT_TOKEN"),
+  secret: envValue("TELEGRAM_WEBHOOK_SECRET"),
   /** ID Telegram yang boleh memerintah bot, dipisah koma. */
   allowedIds: (process.env.TELEGRAM_ALLOWED_IDS ?? "")
     .split(",")
@@ -35,6 +37,27 @@ export function esc(value: unknown): string {
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;");
+}
+
+/** Seperti tg(), tapi mengembalikan alasan penolakan dari Telegram. */
+export async function tgCall<T = unknown>(
+  method: string,
+  body: Record<string, unknown>,
+): Promise<{ ok: true; result: T } | { ok: false; error: string }> {
+  if (!telegramConfig.token) return { ok: false, error: "TELEGRAM_BOT_TOKEN kosong" };
+  try {
+    const res = await fetch(`${telegramConfig.apiBase}/bot${telegramConfig.token}/${method}`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(body),
+      cache: "no-store",
+    });
+    const json = (await res.json()) as { ok: boolean; result?: T; description?: string; error_code?: number };
+    if (json.ok) return { ok: true, result: json.result as T };
+    return { ok: false, error: `${json.error_code ?? res.status} ${json.description ?? "tanpa keterangan"}` };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : String(e) };
+  }
 }
 
 export async function tg<T = unknown>(method: string, body: Record<string, unknown>): Promise<T | null> {

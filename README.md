@@ -63,7 +63,10 @@ Aksi yang mengubah uang atau tampilan toko (tandai dibayar, batalkan, sembunyika
 3. Di Vercel › Environment Variables isi `TELEGRAM_BOT_TOKEN`, `TELEGRAM_WEBHOOK_SECRET` (string acak 20+ huruf/angka), `CRON_SECRET` (string acak), lalu Redeploy.
 4. Kirim `/start` ke bot. Bot membalas ID Telegram kamu. Isi `TELEGRAM_ALLOWED_IDS` dengan ID itu, lalu Redeploy lagi.
 5. Buka `/admin/pengaturan` › **Hubungkan bot**. Setelah itu kirim `/bantuan` ke bot.
-6. Opsional: isi `ANTHROPIC_API_KEY` supaya Venya menulis draf caption dan iklan dengan AI. Tanpa itu Venya memberi template.
+6. Opsional: supaya Venya menulis draf caption dan iklan dengan AI, buat API key gratis di [console.groq.com/keys](https://console.groq.com/keys), isi `GROQ_API_KEY` di Vercel, lalu Redeploy. Tanpa key, Venya memberi template.
+   - Model default `openai/gpt-oss-120b`. Ganti lewat `AI_MODEL` kalau Groq memensiunkan model ini.
+   - Paket gratis Groq dibatasi per menit dan per hari. Kalau kuota habis, Venya memberi template dan kamu bisa coba lagi nanti.
+   - Bisa juga memakai `GEMINI_API_KEY` atau `ANTHROPIC_API_KEY`. Kalau lebih dari satu key terisi, pilih dengan `AI_PROVIDER`.
 
 Untuk tim di grup: buat grup Telegram, masukkan bot, isi `TELEGRAM_NOTIFY_CHAT_ID` dengan ID grup, dan tambahkan ID setiap anggota ke `TELEGRAM_ALLOWED_IDS`.
 

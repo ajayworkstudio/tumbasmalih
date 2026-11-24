@@ -17,7 +17,19 @@ export const venyaHelp = [
   "Venya hanya membuat draf. Posting dan iklan tetap kamu yang jalankan.",
 ].join("\n");
 
-const aiReady = () => Boolean(process.env.ANTHROPIC_API_KEY);
+type Provider = "groq" | "gemini" | "anthropic";
+
+// Pilih penyedia AI dari env. AI_PROVIDER boleh kosong: dipilih dari key yang terisi (Groq dulu).
+function aiProvider(): Provider | null {
+  const wanted = process.env.AI_PROVIDER?.trim().toLowerCase();
+  const keys: Record<Provider, string | undefined> = {
+    groq: process.env.GROQ_API_KEY,
+    gemini: process.env.GEMINI_API_KEY,
+    anthropic: process.env.ANTHROPIC_API_KEY,
+  };
+  if (wanted && wanted in keys) return keys[wanted as Provider] ? (wanted as Provider) : null;
+  return (["groq", "gemini", "anthropic"] as const).find((p) => keys[p]) ?? null;
+}
 
 const RULES = `Kamu Venya, staf marketing toko online ${site.name} (${site.url}). "Tumbas malih" artinya "beli lagi" dalam bahasa Jawa.
 Toko ini menjual barang pilihan dan ebook. Pembeli bisa bayar QRIS, transfer bank, atau COD untuk barang fisik. Admin membalas lewat WhatsApp.
@@ -28,25 +40,74 @@ Aturan menulis:
 - Ajakan bertindak spesifik, misalnya "cek di ${site.url.replace(/^https?:\/\//, "")}".
 - Jawab ringkas, siap salin. Format teks biasa tanpa markdown.`;
 
+// Groq dan Gemini sama-sama menerima format chat completions ala OpenAI.
+const OPENAI_STYLE = {
+  groq: { url: "https://api.groq.com/openai/v1/chat/completions", key: "GROQ_API_KEY", model: "openai/gpt-oss-120b" },
+  gemini: {
+    url: "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
+    key: "GEMINI_API_KEY",
+    model: "gemini-flash-latest",
+  },
+} as const;
+
 async function ask(prompt: string): Promise<string> {
-  const res = await fetch("https://api.anthropic.com/v1/messages", {
+  const provider = aiProvider();
+  if (!provider) throw new Error("AI belum diatur");
+  const model = process.env.AI_MODEL?.trim();
+
+  if (provider === "anthropic") {
+    const res = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        "x-api-key": process.env.ANTHROPIC_API_KEY ?? "",
+        "anthropic-version": "2023-06-01",
+      },
+      body: JSON.stringify({
+        model: model || process.env.ANTHROPIC_MODEL || "claude-haiku-5-5",
+        max_tokens: 900,
+        system: RULES,
+        messages: [{ role: "user", content: prompt }],
+      }),
+      cache: "no-store",
+    });
+    const json = (await res.json()) as { content?: { type: string; text?: string }[]; error?: { message: string } };
+    if (!res.ok) throw new Error(json.error?.message ?? `HTTP ${res.status}`);
+    return (json.content ?? []).filter((c) => c.type === "text").map((c) => c.text ?? "").join("\n").trim();
+  }
+
+  const cfg = OPENAI_STYLE[provider];
+  const useModel = model || cfg.model;
+  const body: Record<string, unknown> = {
+    model: useModel,
+    messages: [
+      { role: "system", content: RULES },
+      { role: "user", content: prompt },
+    ],
+    max_completion_tokens: 2000,
+  };
+  // Model gpt-oss berpikir dulu sebelum menjawab. Dibuat singkat dan tidak ikut dikirim.
+  if (provider === "groq" && useModel.startsWith("openai/gpt-oss")) {
+    body.reasoning_effort = "low";
+    body.include_reasoning = false;
+  }
+  const res = await fetch(cfg.url, {
     method: "POST",
-    headers: {
-      "content-type": "application/json",
-      "x-api-key": process.env.ANTHROPIC_API_KEY ?? "",
-      "anthropic-version": "2023-06-01",
-    },
-    body: JSON.stringify({
-      model: process.env.ANTHROPIC_MODEL || "claude-haiku-5-5",
-      max_tokens: 900,
-      system: RULES,
-      messages: [{ role: "user", content: prompt }],
-    }),
+    headers: { "content-type": "application/json", authorization: `Bearer ${process.env[cfg.key] ?? ""}` },
+    body: JSON.stringify(body),
     cache: "no-store",
   });
-  const json = (await res.json()) as { content?: { type: string; text?: string }[]; error?: { message: string } };
-  if (!res.ok) throw new Error(json.error?.message ?? `HTTP ${res.status}`);
-  return (json.content ?? []).filter((c) => c.type === "text").map((c) => c.text ?? "").join("\n").trim();
+  type Completion = { choices?: { message?: { content?: string | null } }[]; error?: { message?: string } };
+  // Gemini kadang membungkus error dalam array.
+  const raw = (await res.json().catch(() => ({}))) as Completion | Completion[];
+  const json: Completion = Array.isArray(raw) ? (raw[0] ?? {}) : raw;
+  if (!res.ok) {
+    if (res.status === 429) throw new Error("kuota gratis sedang habis, coba lagi beberapa menit lagi");
+    throw new Error(json.error?.message ?? `HTTP ${res.status}`);
+  }
+  const text = json.choices?.[0]?.message?.content ?? "";
+  if (!text.trim()) throw new Error("AI tidak mengirim jawaban");
+  return text.trim();
 }
 
 function productFacts(p: ProductRow & { description?: string }): string {
@@ -63,8 +124,8 @@ function productFacts(p: ProductRow & { description?: string }): string {
 }
 
 async function withAi(task: string, prompt: string, fallback: string, actor: string): Promise<Reply> {
-  if (!aiReady()) {
-    return { text: `${fallback}\n\n<i>Venya belum tersambung ke AI. Isi env ANTHROPIC_API_KEY di Vercel supaya draf ditulis otomatis.</i>` };
+  if (!aiProvider()) {
+    return { text: `${fallback}\n\n<i>Venya belum tersambung ke AI. Isi env GROQ_API_KEY di Vercel (gratis di console.groq.com) supaya draf ditulis otomatis.</i>` };
   }
   try {
     const out = await ask(prompt);

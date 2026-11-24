@@ -6,18 +6,13 @@ import { requireAdmin } from "@/lib/auth";
 import { formatDate, formatRupiah } from "@/lib/format";
 import { getSettings } from "@/lib/settings";
 import { paymentLabels } from "@/lib/site";
+import { monthStartWIB } from "@/lib/time";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { Order, OrderStatus } from "@/lib/types";
 
 export const metadata = { title: "Ringkasan | Admin" };
 
 const PAID: OrderStatus[] = ["dibayar", "diproses", "dikirim", "selesai"];
-
-/** Awal bulan ini menurut jam WIB, dalam ISO UTC. */
-function monthStartJakarta(): string {
-  const wib = new Date(Date.now() + 7 * 3600_000);
-  return new Date(Date.UTC(wib.getUTCFullYear(), wib.getUTCMonth(), 1) - 7 * 3600_000).toISOString();
-}
 
 async function Dashboard() {
   await requireAdmin();
@@ -29,7 +24,7 @@ async function Dashboard() {
     count(["menunggu_pembayaran"]),
     count(["menunggu_konfirmasi"]),
     count(["dibayar", "diproses"]),
-    supabase.from("orders").select("total").in("status", PAID).gte("paid_at", monthStartJakarta()),
+    supabase.from("orders").select("total").in("status", PAID).gte("paid_at", monthStartWIB()),
     supabase.from("products").select("id", { count: "exact", head: true }).eq("is_active", true),
     supabase
       .from("products")

@@ -276,3 +276,28 @@ export async function signIn(_prev: LoginState, formData: FormData): Promise<Log
   }
   redirect("/admin");
 }
+
+export type TelegramState = { error?: string; ok?: string };
+
+/** Daftarkan webhook dan daftar perintah bot ke Telegram. */
+export async function connectTelegram(): Promise<TelegramState> {
+  await requireAdmin();
+  const { telegramConfig, telegramReady, tg } = await import("@/lib/telegram/api");
+  const { BOT_COMMANDS } = await import("@/lib/telegram/router");
+  const { site } = await import("@/lib/site");
+  if (!telegramReady()) {
+    return { error: "Env TELEGRAM_BOT_TOKEN, TELEGRAM_WEBHOOK_SECRET, dan TELEGRAM_ALLOWED_IDS belum lengkap di Vercel." };
+  }
+  if (!site.url.startsWith("https://")) {
+    return { error: `Telegram butuh alamat https. NEXT_PUBLIC_SITE_URL sekarang ${site.url}.` };
+  }
+  const hook = await tg("setWebhook", {
+    url: `${site.url}/api/telegram`,
+    secret_token: telegramConfig.secret,
+    allowed_updates: ["message", "callback_query"],
+    drop_pending_updates: true,
+  });
+  if (hook === null) return { error: "Telegram menolak setWebhook. Cek TELEGRAM_BOT_TOKEN, lalu coba lagi." };
+  await tg("setMyCommands", { commands: BOT_COMMANDS });
+  return { ok: `Bot tersambung ke ${site.url}/api/telegram. Coba kirim /bantuan ke bot.` };
+}

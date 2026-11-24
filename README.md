@@ -45,9 +45,31 @@ npm run dev                  # buka http://localhost:3000
 3. Tambahkan domain `tumbasmalih.com` di **Settings › Domains** dan arahkan DNS sesuai petunjuk Vercel.
 4. Daftarkan `https://tumbasmalih.com/sitemap.xml` di Google Search Console.
 
+## Bot Telegram: Akbar, Venya, Bulan
+
+Tiga "karyawan" bot yang kamu perintah dari Telegram:
+
+| Perintah | Karyawan | Contoh |
+|---|---|---|
+| `/akbar` | Administrasi: pesanan, pembayaran, resi, rekap | `/akbar`, `/akbar cek TM7K2QXPRA`, `/akbar bayar TM7K2QXPRA`, `/akbar kirim TM7K2QXPRA JP123`, `/akbar rekap bulan`, `/akbar ingatkan` |
+| `/bulan` | Inventori: stok, harga modal, pesan ke marketplace | `/bulan`, `/bulan pesan`, `/bulan stok rak-sepatu 12`, `/bulan modal rak-sepatu 72000`, `/bulan margin`, `/bulan sembunyikan rak-sepatu` |
+| `/venya` | Marketing: produk laris, draf caption & iklan | `/venya laris`, `/venya caption rice-cooker`, `/venya iklan rice-cooker`, `/venya ide` |
+
+Aksi yang mengubah uang atau tampilan toko (tandai dibayar, batalkan, sembunyikan produk) selalu minta konfirmasi lewat tombol. Pesanan baru otomatis dikabarkan Akbar, dan setiap pukul 07.00 WIB Akbar dan Bulan mengirim laporan pagi. Semua aksi tercatat di tabel `bot_log`.
+
+**Setup sekali:**
+1. Di Telegram, chat **@BotFather** → `/newbot` → beri nama (misal *Kantor tumbasmalih*) → salin token.
+2. Jalankan `supabase/migrations/003-bot.sql` di SQL Editor Supabase.
+3. Di Vercel › Environment Variables isi `TELEGRAM_BOT_TOKEN`, `TELEGRAM_WEBHOOK_SECRET` (string acak 20+ huruf/angka), `CRON_SECRET` (string acak), lalu Redeploy.
+4. Kirim `/start` ke bot. Bot membalas ID Telegram kamu. Isi `TELEGRAM_ALLOWED_IDS` dengan ID itu, lalu Redeploy lagi.
+5. Buka `/admin/pengaturan` › **Hubungkan bot**. Setelah itu kirim `/bantuan` ke bot.
+6. Opsional: isi `ANTHROPIC_API_KEY` supaya Venya menulis draf caption dan iklan dengan AI. Tanpa itu Venya memberi template.
+
+Untuk tim di grup: buat grup Telegram, masukkan bot, isi `TELEGRAM_NOTIFY_CHAT_ID` dengan ID grup, dan tambahkan ID setiap anggota ke `TELEGRAM_ALLOWED_IDS`.
+
 ## Migrasi database
 
-Database yang dibuat sebelum fitur galeri foto perlu menjalankan `supabase/migrations/002-galeri-foto.sql` sekali di SQL Editor. Database baru cukup memakai `schema.sql`.
+Database lama menjalankan file di `supabase/migrations/` yang belum pernah dijalankan, berurutan: `002-galeri-foto.sql`, `003-bot.sql`. Database baru cukup memakai `schema.sql`.
 
 ## Desain
 

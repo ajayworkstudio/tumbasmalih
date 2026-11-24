@@ -112,6 +112,21 @@ drop trigger if exists orders_updated_at on public.orders;
 create trigger orders_updated_at before update on public.orders
   for each row execute function public.set_updated_at();
 
+-- Log aksi bot Telegram.
+create table if not exists public.bot_log (
+  id bigint generated always as identity primary key,
+  staff text not null check (staff in ('akbar', 'venya', 'bulan', 'sistem')),
+  actor text not null,        -- ID Telegram yang memberi perintah, atau "cron"
+  command text not null,
+  result text not null default '',
+  created_at timestamptz not null default now()
+);
+
+create index if not exists bot_log_created_idx on public.bot_log (created_at desc);
+
+-- Hanya server (service role) yang boleh membaca dan menulis.
+alter table public.bot_log enable row level security;
+
 -- Publik hanya bisa membaca kategori dan produk aktif.
 -- Pesanan hanya diakses server lewat service role (tanpa policy = tertutup untuk publik).
 alter table public.categories enable row level security;

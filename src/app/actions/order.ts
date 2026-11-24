@@ -2,6 +2,7 @@
 
 import { randomInt } from "node:crypto";
 import { redirect } from "next/navigation";
+import { after } from "next/server";
 import { normalizePhone } from "@/lib/format";
 import { getSettings } from "@/lib/settings";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -162,6 +163,15 @@ export async function createOrder(_prev: CheckoutState, formData: FormData): Pro
     await supabase.from("orders").delete().eq("id", orderId);
     return { error: "Gagal menyimpan pesanan. Coba lagi sebentar lagi.", values };
   }
+
+  // Kabari Akbar di Telegram setelah respons terkirim, supaya checkout pembeli tidak ikut menunggu.
+  const orderCodeForBot = code;
+  after(async () => {
+    const { notify } = await import("@/lib/telegram/api");
+    const { newOrderMessage } = await import("@/lib/telegram/akbar");
+    const message = await newOrderMessage(orderCodeForBot);
+    if (message) await notify(message);
+  });
 
   redirect(`/pesanan/${code}?baru=1`);
 }

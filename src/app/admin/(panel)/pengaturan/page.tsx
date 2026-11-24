@@ -4,6 +4,8 @@ import { requireAdmin } from "@/lib/auth";
 import type { Settings } from "@/lib/settings";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { SettingsForm } from "./SettingsForm";
+import { TelegramCard } from "./TelegramCard";
+import { telegramReady, tg } from "@/lib/telegram/api";
 
 export const metadata = { title: "Pengaturan | Admin" };
 
@@ -24,6 +26,13 @@ async function SettingsLoader() {
   return <SettingsForm settings={settings} />;
 }
 
+async function TelegramLoader() {
+  await requireAdmin();
+  const ready = telegramReady();
+  const info = ready ? await tg<{ url: string; last_error_message?: string }>("getWebhookInfo", {}) : null;
+  return <TelegramCard ready={ready} webhookUrl={info?.url ?? ""} lastError={info?.last_error_message ?? ""} />;
+}
+
 export default function SettingsPage() {
   return (
     <div className="flex flex-col gap-5">
@@ -33,6 +42,9 @@ export default function SettingsPage() {
       </div>
       <Suspense fallback={<BlockSkeleton />}>
         <SettingsLoader />
+      </Suspense>
+      <Suspense fallback={<BlockSkeleton />}>
+        <TelegramLoader />
       </Suspense>
     </div>
   );

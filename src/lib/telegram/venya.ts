@@ -32,7 +32,7 @@ function aiProvider(): Provider | null {
 }
 
 const RULES = `Kamu Venya, staf marketing toko online ${site.name} (${site.url}). "Tumbas malih" artinya "beli lagi" dalam bahasa Jawa.
-Toko ini menjual barang pilihan dan ebook. Pembeli bisa bayar QRIS, transfer bank, atau COD untuk barang fisik. Admin membalas lewat WhatsApp.
+Toko ini menjual barang pilihan dan ebook. Pembeli bayar lewat QRIS atau transfer bank; toko tidak melayani COD, jadi jangan pernah menjanjikan COD. Ongkir barang fisik dihitung admin sesuai alamat sebelum pembeli membayar. Admin membalas lewat WhatsApp.
 Aturan menulis:
 - Bahasa Indonesia santai, sapaan "kamu", boleh satu kata Jawa ringan.
 - Hanya pakai fakta yang diberikan. Jangan mengarang diskon, promo, testimoni, jumlah terjual, rating, atau klaim "termurah/hemat".
@@ -113,7 +113,7 @@ async function ask(prompt: string): Promise<string> {
 function productFacts(p: ProductRow & { description?: string }): string {
   return [
     `Nama: ${p.name}`,
-    `Jenis: ${p.type === "ebook" ? "ebook (file digital, diunduh setelah bayar)" : "barang fisik (bisa COD)"}`,
+    `Jenis: ${p.type === "ebook" ? "ebook (file digital, diunduh setelah bayar)" : "barang fisik (ongkir dihitung sesuai alamat)"}`,
     `Harga: ${rp(p.price)}`,
     p.type === "fisik" && p.stock !== null ? `Stok: ${p.stock}` : "",
     `Deskripsi dari pemilik: ${p.description || "(kosong)"}`,
@@ -183,7 +183,7 @@ export async function venyaCommand(args: string[], actor: string): Promise<Reply
     if (!product) return { text: candidatesText(query, candidates, example) };
     const facts = productFacts(product);
     if (lower === "caption") {
-      const fallback = `<b>Template caption</b>\n${esc(product.name)}, ${rp(product.price)}.\n${esc(product.description || "[TULIS MANFAAT UTAMA]")}\n${product.type === "fisik" ? "Bisa COD." : "Bayar, langsung unduh dari halaman pesanan."}\nCek di ${esc(site.url)}/produk/${esc(product.slug)}`;
+      const fallback = `<b>Template caption</b>\n${esc(product.name)}, ${rp(product.price)}.\n${esc(product.description || "[TULIS MANFAAT UTAMA]")}\n${product.type === "fisik" ? "Ongkir dihitung sesuai alamatmu." : "Bayar, langsung unduh dari halaman pesanan."}\nCek di ${esc(site.url)}/produk/${esc(product.slug)}`;
       return withAi(
         `caption ${product.slug}`,
         `Buat 1 caption Instagram (maksimal 90 kata) dan 3 pilihan hook pembuka video TikTok/Reels (maksimal 12 kata masing-masing), plus 5 hashtag relevan. Data produk:\n${facts}`,
@@ -191,7 +191,7 @@ export async function venyaCommand(args: string[], actor: string): Promise<Reply
         actor,
       );
     }
-    const fallback = `<b>Template iklan</b>\nJudul: ${esc(product.name)}\nTeks: ${esc(product.description || "[TULIS MANFAAT UTAMA]")} ${rp(product.price)}. ${product.type === "fisik" ? "Bisa COD." : ""}`;
+    const fallback = `<b>Template iklan</b>\nJudul: ${esc(product.name)}\nTeks: ${esc(product.description || "[TULIS MANFAAT UTAMA]")} ${rp(product.price)}. ${product.type === "fisik" ? "Ongkir sesuai alamat." : ""}`;
     return withAi(
       `iklan ${product.slug}`,
       `Buat 3 variasi teks iklan Meta (Facebook/Instagram). Tiap variasi: teks utama maksimal 40 kata, judul maksimal 6 kata, dan saran tombol (Belanja Sekarang/Pelajari Selengkapnya). Sudut pandang berbeda tiap variasi (masalah yang diselesaikan, cara pakai, kemudahan bayar). Data produk:\n${facts}`,
@@ -214,7 +214,7 @@ export async function venyaCommand(args: string[], actor: string): Promise<Reply
     return withAi(
       "ide konten minggu ini",
       `Susun rencana 5 konten untuk minggu ini (Senin sampai Jumat) untuk Instagram dan TikTok. Tiap hari: format (reels/carousel/story), judul, dan 1 kalimat isi. Gunakan data ini:\n${context}`,
-      `<b>Ide dasar</b>\n1. Reels unboxing produk terlaris\n2. Carousel cara belanja tanpa akun marketplace\n3. Story tanya jawab soal COD\n4. Reels "isi meja anak kos"\n5. Carousel ebook: 3 hal yang dipelajari`,
+      `<b>Ide dasar</b>\n1. Reels unboxing produk terlaris\n2. Carousel cara belanja tanpa akun marketplace\n3. Story tanya jawab: kenapa ongkir dihitung dulu\n4. Reels "isi meja anak kos"\n5. Carousel ebook: 3 hal yang dipelajari`,
       actor,
     );
   }

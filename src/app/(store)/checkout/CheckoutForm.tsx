@@ -12,7 +12,6 @@ import type { PaymentMethod } from "@/lib/types";
 const methods: { id: PaymentMethod; label: string; sub: string; icon: IconName }[] = [
   { id: "qris", label: "QRIS", sub: "Scan dari e-wallet atau m-banking", icon: "qris" },
   { id: "transfer", label: "Transfer Bank", sub: "Transfer manual ke rekening kami", icon: "bank" },
-  { id: "cod", label: "Bayar di Tempat (COD)", sub: "Khusus pesanan barang fisik", icon: "truck" },
 ];
 
 const inputCls =
@@ -33,17 +32,13 @@ function Field({
   );
 }
 
-export function CheckoutForm({ shippingFee }: { shippingFee: number }) {
+export function CheckoutForm() {
   const { items, count, subtotal, hasPhysical } = useCart();
-  const allPhysical = items.length > 0 && items.every((i) => i.type === "fisik");
   const [method, setMethod] = useState<PaymentMethod>("qris");
   const [state, action, pending] = useActionState<CheckoutState, FormData>(createOrder, {});
-  const shipping = hasPhysical ? shippingFee : 0;
-  const total = subtotal + shipping;
   const fe = state.fieldErrors ?? {};
   const v = state.values ?? {};
-  const selected = method === "cod" && !allPhysical ? "qris" : method;
-
+  
   useEffect(() => {
     if (count > 0) track("InitiateCheckout", { value: subtotal, currency: "IDR", num_items: count });
     // Cukup sekali saat halaman dibuka.
@@ -134,14 +129,13 @@ export function CheckoutForm({ shippingFee }: { shippingFee: number }) {
           <fieldset className="flex flex-col gap-2.5">
             <legend className="sr-only">Pilih metode pembayaran</legend>
             {methods.map((m) => {
-              const disabled = m.id === "cod" && !allPhysical;
-              const on = selected === m.id;
+              const on = method === m.id;
               return (
                 <label
                   key={m.id}
-                  className={`flex min-h-15 items-center gap-3 rounded-xl border px-3 py-2.5 ${
-                    disabled ? "cursor-not-allowed opacity-60" : "hover:border-brand"
-                  } ${on ? "border-2 border-brand bg-[#F3F6FF]" : "border-field bg-white"}`}
+                  className={`flex min-h-15 items-center gap-3 rounded-xl border px-3 py-2.5 hover:border-brand ${
+                    on ? "border-2 border-brand bg-[#F3F6FF]" : "border-field bg-white"
+                  }`}
                 >
                   <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-brand-soft text-brand">
                     <Icon name={m.icon} size={20} />
@@ -155,7 +149,6 @@ export function CheckoutForm({ shippingFee }: { shippingFee: number }) {
                     name="payment_method"
                     value={m.id}
                     checked={on}
-                    disabled={disabled}
                     onChange={() => setMethod(m.id)}
                     className="size-5 shrink-0 accent-brand"
                   />
@@ -164,10 +157,11 @@ export function CheckoutForm({ shippingFee }: { shippingFee: number }) {
             })}
           </fieldset>
           {fe.payment && <span className="text-xs font-medium text-danger">{fe.payment}</span>}
-          {!allPhysical && (
+          {hasPhysical && (
             <p className="flex items-start gap-2 rounded-xl bg-[#FFF8E1] px-3 py-2.5 text-xs leading-relaxed text-[#6B4E00]">
               <Icon name="info" size={16} className="mt-px shrink-0" />
-              COD hanya untuk pesanan yang semuanya barang fisik. Ebook perlu dibayar dulu.
+              Ongkir kami hitung dulu sesuai alamatmu. Total yang harus dibayar muncul di halaman pesanan dan kami kabari lewat
+              WhatsApp, biasanya dalam beberapa jam.
             </p>
           )}
         </section>
@@ -202,12 +196,12 @@ export function CheckoutForm({ shippingFee }: { shippingFee: number }) {
         {hasPhysical && (
           <div className="flex justify-between text-sm text-muted">
             <span>Ongkos kirim</span>
-            <span className="font-semibold text-ink">{formatRupiah(shipping)}</span>
+            <span className="font-semibold text-ink">Dihitung admin</span>
           </div>
         )}
         <div className="flex justify-between text-base font-extrabold">
-          <span>Total</span>
-          <span>{formatRupiah(total)}</span>
+          <span>{hasPhysical ? "Total (belum ongkir)" : "Total"}</span>
+          <span>{formatRupiah(subtotal)}</span>
         </div>
 
         <button
@@ -218,8 +212,8 @@ export function CheckoutForm({ shippingFee }: { shippingFee: number }) {
           {pending ? "Membuat pesanan…" : "Buat pesanan"}
         </button>
         <p className="text-xs leading-relaxed text-muted">
-          {selected === "cod"
-            ? "Admin akan menghubungi lewat WhatsApp untuk konfirmasi sebelum barang dikirim."
+          {hasPhysical
+            ? "Belum perlu bayar sekarang. Tunggu total dengan ongkir dari kami, lalu bayar dari halaman pesanan."
             : "Instruksi pembayaran muncul di halaman berikutnya."}
         </p>
       </aside>

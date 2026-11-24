@@ -5,14 +5,15 @@ import { site, waLink } from "@/lib/site";
 export const metadata: Metadata = {
   title: "Cara belanja",
   description:
-    "Cara belanja di tumbasmalih: pilih produk, checkout, bayar lewat QRIS atau transfer (COD untuk barang fisik), lalu pantau pesanan dari halaman pesanan.",
+    "Cara belanja di tumbasmalih: pilih produk, checkout, bayar lewat QRIS atau transfer bank, lalu pantau pesanan dari halaman pesanan.",
   alternates: { canonical: "/cara-belanja" },
 };
 
 const steps = [
   ["Pilih produk", "Masukkan barang atau ebook ke keranjang."],
   ["Checkout", "Isi nama, nomor WhatsApp, email, dan alamat (khusus barang fisik)."],
-  ["Bayar", "Pilih QRIS atau transfer bank. Pesanan yang semuanya barang fisik juga bisa COD."],
+  ["Tunggu ongkir", "Untuk barang fisik, kami hitung ongkir ke alamatmu lalu kabari total yang harus dibayar lewat WhatsApp. Ebook langsung ke langkah berikutnya."],
+  ["Bayar", "Bayar lewat QRIS atau transfer bank sesuai total di halaman pesanan."],
   ["Kirim bukti bayar", "Tekan tombol WhatsApp di halaman pesanan, lalu kirim bukti transfer ke admin."],
   ["Terima pesanan", "Ebook diunduh dari halaman pesanan. Barang fisik dikirim, dan nomor resinya muncul di halaman yang sama."],
 ];

@@ -8,7 +8,8 @@ import { formatDate, formatRupiah } from "@/lib/format";
 import { paymentLabels, site, statusLabels, statusOrder } from "@/lib/site";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { Order, OrderItem } from "@/lib/types";
-import { updateOrder } from "../../../actions";
+import { shippingQuoteLink } from "@/lib/shipping";
+import { setOrderShipping, updateOrder } from "../../../actions";
 
 export const metadata = { title: "Detail pesanan | Admin" };
 
@@ -31,6 +32,8 @@ async function OrderDetail({ params, searchParams }: PageProps<"/admin/pesanan/[
 
   const modal = items.reduce((n, it) => n + (it.products?.source_price ?? 0) * it.qty, 0);
   const hasAllCost = items.every((it) => it.products?.source_price != null);
+  const needsShipping =
+    items.some((it) => it.type === "fisik") && (order.status === "menunggu_konfirmasi" || order.status === "menunggu_pembayaran");
   const customerWa = `https://wa.me/${order.phone}?text=${encodeURIComponent(
     `Halo ${order.customer_name}, ini admin ${site.name} terkait pesanan ${order.code}.`,
   )}`;
@@ -46,6 +49,16 @@ async function OrderDetail({ params, searchParams }: PageProps<"/admin/pesanan/[
         </Link>
       </div>
       {sp.disimpan === "1" && <p role="status" className="rounded-xl bg-[#E3F6EE] px-4 py-3 text-sm font-semibold text-ok">Perubahan disimpan.</p>}
+      {sp.ongkir === "1" && (
+        <p role="status" className="rounded-xl bg-[#E3F6EE] px-4 py-3 text-sm font-semibold text-ok">
+          Ongkir disimpan. Total sekarang {formatRupiah(order.total)}. Kirim totalnya ke pembeli lewat tombol WhatsApp di kotak Ongkir.
+        </p>
+      )}
+      {(sp.ongkir === "invalid" || sp.ongkir === "gagal") && (
+        <p role="alert" className="rounded-xl bg-[#FDECEC] px-4 py-3 text-sm font-semibold text-danger">
+          {sp.ongkir === "invalid" ? "Ongkir harus angka bulat, contoh 11900." : "Ongkir tidak tersimpan. Ongkir hanya bisa diisi sebelum pesanan dibayar."}
+        </p>
+      )}
 
       <div className="grid gap-5 lg:grid-cols-[1fr_340px]">
         <div className="flex flex-col gap-5">
@@ -75,7 +88,7 @@ async function OrderDetail({ params, searchParams }: PageProps<"/admin/pesanan/[
             </ul>
             <div className="flex flex-col gap-1 border-t border-line pt-3 text-sm">
               <div className="flex justify-between"><span className="text-muted">Subtotal</span><span>{formatRupiah(order.subtotal)}</span></div>
-              <div className="flex justify-between"><span className="text-muted">Ongkir</span><span>{formatRupiah(order.shipping_fee)}</span></div>
+              <div className="flex justify-between"><span className="text-muted">Ongkir</span><span>{order.status === "menunggu_konfirmasi" ? "Belum diisi" : formatRupiah(order.shipping_fee)}</span></div>
               <div className="flex justify-between font-extrabold"><span>Total</span><span>{formatRupiah(order.total)}</span></div>
               {hasAllCost && (
                 <div className="flex justify-between text-ok"><span>Perkiraan margin (di luar ongkir)</span><span className="font-bold">{formatRupiah(order.subtotal - modal)}</span></div>
@@ -104,6 +117,40 @@ async function OrderDetail({ params, searchParams }: PageProps<"/admin/pesanan/[
           </section>
         </div>
 
+        <div className="flex h-fit flex-col gap-5">
+          {needsShipping && (
+            <form action={setOrderShipping} className="flex flex-col gap-3 rounded-2xl border-2 border-brand bg-white p-5">
+              <input type="hidden" name="id" value={order.id} />
+              <h2 className="font-bold">Ongkir</h2>
+              <p className="text-xs leading-relaxed text-muted">
+                Masukkan barang ke keranjang pemasok dengan alamat pembeli ({order.city} {order.postal_code}), lalu salin biaya pengiriman + asuransinya ke sini.
+              </p>
+              <label className="flex flex-col gap-1.5 text-sm font-semibold">
+                Ongkir (Rp)
+                <input
+                  name="shipping_fee"
+                  inputMode="numeric"
+                  required
+                  defaultValue={order.status === "menunggu_konfirmasi" ? "" : order.shipping_fee}
+                  placeholder="11900"
+                  className="h-11 rounded-lg border border-field px-3"
+                />
+              </label>
+              <button type="submit" className="h-11 rounded-xl bg-brand font-bold text-white hover:bg-brand-dark">
+                {order.status === "menunggu_konfirmasi" ? "Simpan ongkir" : "Ubah ongkir"}
+              </button>
+              {order.status === "menunggu_pembayaran" && order.shipping_fee > 0 && (
+                <a
+                  href={shippingQuoteLink(order)}
+                  target="_blank"
+                  rel="noopener"
+                  className="flex h-11 items-center justify-center rounded-xl border-2 border-brand text-sm font-bold text-brand hover:bg-brand-soft"
+                >
+                  Kirim total ke pembeli (WhatsApp)
+                </a>
+              )}
+            </form>
+          )}
         <form action={updateOrder} className="flex h-fit flex-col gap-4 rounded-2xl border border-line bg-white p-5">
           <input type="hidden" name="id" value={order.id} />
           <h2 className="font-bold">Ubah status</h2>
@@ -124,6 +171,7 @@ async function OrderDetail({ params, searchParams }: PageProps<"/admin/pesanan/[
           </p>
           <button type="submit" className="h-11 rounded-xl bg-brand font-bold text-white hover:bg-brand-dark">Simpan</button>
         </form>
+        </div>
       </div>
     </div>
   );

@@ -101,7 +101,7 @@ async function ProductDetail({ params }: { params: PageProps<"/produk/[slug]">["
             ) : (
               <>
                 <p className="flex items-start gap-2"><Icon name="truck" size={18} className="mt-0.5 shrink-0 text-brand" /> Estimasi pengiriman: {settings.policyShipping || "[ISI ESTIMASI PENGIRIMAN]"}</p>
-                <p className="flex items-start gap-2"><Icon name="check" size={18} className="mt-0.5 shrink-0 text-brand" /> Bisa bayar di tempat (COD).</p>
+                <p className="flex items-start gap-2"><Icon name="check" size={18} className="mt-0.5 shrink-0 text-brand" /> Ongkir dihitung sesuai alamatmu, dikabari sebelum kamu bayar.</p>
               </>
             )}
           </div>

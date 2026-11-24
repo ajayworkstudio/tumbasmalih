@@ -85,8 +85,8 @@ async function OrderView({ params, searchParams }: PageProps<"/pesanan/[kode]">)
 
       {order.status === "menunggu_konfirmasi" && (
         <p className="rounded-[18px] border border-line bg-white p-5 text-sm leading-relaxed">
-          Pesanan COD kamu sudah kami terima. Admin akan menghubungi lewat WhatsApp untuk konfirmasi sebelum barang dikirim.
-          Siapkan uang pas <strong>{formatRupiah(order.total)}</strong> saat kurir datang.
+          Pesanan sudah kami terima. Kami sedang menghitung ongkir ke alamatmu. Begitu selesai, total yang harus dibayar dan
+          cara bayarnya muncul di halaman ini dan kami kabari lewat WhatsApp. Belum perlu bayar sekarang.
         </p>
       )}
 
@@ -126,14 +126,21 @@ async function OrderView({ params, searchParams }: PageProps<"/pesanan/[kode]">)
           <span>Subtotal</span>
           <span className="text-ink">{formatRupiah(order.subtotal)}</span>
         </div>
-        {order.shipping_fee > 0 && (
+        {order.status === "menunggu_konfirmasi" ? (
           <div className="flex justify-between text-sm text-muted">
             <span>Ongkos kirim</span>
-            <span className="text-ink">{formatRupiah(order.shipping_fee)}</span>
+            <span className="text-ink">Sedang dihitung</span>
           </div>
+        ) : (
+          order.shipping_fee > 0 && (
+            <div className="flex justify-between text-sm text-muted">
+              <span>Ongkos kirim</span>
+              <span className="text-ink">{formatRupiah(order.shipping_fee)}</span>
+            </div>
+          )
         )}
         <div className="flex justify-between font-extrabold">
-          <span>Total</span>
+          <span>{order.status === "menunggu_konfirmasi" ? "Total (belum ongkir)" : "Total"}</span>
           <span>{formatRupiah(order.total)}</span>
         </div>
         <p className="text-xs text-muted">Pembayaran: {paymentLabels[order.payment_method]}</p>

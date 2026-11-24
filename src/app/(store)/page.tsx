@@ -16,7 +16,7 @@ const reasons = [
   },
   {
     title: "Tanpa akun marketplace",
-    body: "Cukup isi nama, nomor WhatsApp, dan alamat. Bayar lewat QRIS, transfer bank, atau COD untuk barang fisik.",
+    body: "Cukup isi nama, nomor WhatsApp, dan alamat. Bayar lewat QRIS atau transfer bank.",
   },
   {
     title: "Ada admin yang membalas",
@@ -60,8 +60,7 @@ export default async function HomePage() {
             Mau <span className="marker-tag">tumbas</span> apa hari ini?
           </h1>
           <p className="max-w-110 text-[15px] leading-relaxed text-[#DCE5FF] md:text-base">
-            Barang yang sudah kami pilih, plus ebook praktis. Bayar pakai QRIS, transfer bank, atau COD untuk barang
-            fisik.
+            Barang yang sudah kami pilih, plus ebook praktis. Bayar pakai QRIS atau transfer bank.
           </p>
           <div className="mt-1 flex flex-wrap gap-3">
             <Link
@@ -99,7 +98,7 @@ export default async function HomePage() {
               <Icon name="truck" size={20} className="text-brand" /> Barang fisik
             </span>
             <span className="text-sm leading-relaxed text-muted">
-              Bisa bayar di tempat (COD). Nomor resi muncul di halaman pesanan begitu barang dikirim.
+              Ongkir dihitung sesuai alamatmu sebelum bayar. Nomor resi muncul di halaman pesanan begitu barang dikirim.
             </span>
           </Link>
         </div>

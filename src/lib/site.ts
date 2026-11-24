@@ -15,7 +15,7 @@ export const site = {
   name: "tumbasmalih",
   tagline: "Barang pilihan, bayar gampang.",
   description:
-    "Etalase kurasi barang dan ebook pilihan. Bayar pakai QRIS, transfer bank, atau COD untuk barang fisik.",
+    "Etalase kurasi barang dan ebook pilihan. Bayar pakai QRIS atau transfer bank.",
   url: siteUrl(process.env.NEXT_PUBLIC_SITE_URL),
   /** Cadangan untuk halaman error saat database tidak bisa dibaca. Nomor utama diatur di /admin/pengaturan. */
   whatsappFallback: process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ?? "",
@@ -35,7 +35,7 @@ export const paymentLabels: Record<PaymentMethod, string> = {
 
 export const statusLabels: Record<OrderStatus, string> = {
   menunggu_pembayaran: "Menunggu pembayaran",
-  menunggu_konfirmasi: "Menunggu konfirmasi",
+  menunggu_konfirmasi: "Menunggu ongkir",
   dibayar: "Sudah dibayar",
   diproses: "Sedang diproses",
   dikirim: "Dikirim",

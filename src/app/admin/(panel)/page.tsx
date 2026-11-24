@@ -59,7 +59,7 @@ async function Dashboard() {
 
   const tiles = [
     { label: "Menunggu pembayaran", value: waitPay.count ?? 0, href: "/admin/pesanan?status=menunggu_pembayaran" },
-    { label: "COD perlu dikonfirmasi", value: waitCod.count ?? 0, href: "/admin/pesanan?status=menunggu_konfirmasi" },
+    { label: "Perlu diisi ongkir", value: waitCod.count ?? 0, href: "/admin/pesanan?status=menunggu_konfirmasi" },
     { label: "Perlu dipesankan / dikirim", value: toShip.count ?? 0, href: "/admin/pesanan?status=dibayar" },
   ];
 

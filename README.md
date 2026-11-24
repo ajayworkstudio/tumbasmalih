@@ -1,7 +1,7 @@
 # tumbasmalih.com
 
 Etalase kurasi barang & ebook, dengan checkout sendiri. Pembeli bayar di tumbasmalih
-(QRIS / transfer / COD), lalu admin memesankan barang fisik ke marketplace di balik layar.
+(QRIS / transfer bank), lalu admin memesankan barang fisik ke marketplace di balik layar.
 Ebook bisa diunduh dari halaman pesanan setelah pembayaran dikonfirmasi.
 
 **Stack:** Next.js 16 (App Router, Cache Components) · Tailwind CSS 4 · Supabase (Postgres, Auth, Storage) · Vercel
@@ -19,7 +19,7 @@ Ebook bisa diunduh dari halaman pesanan setelah pembayaran dikonfirmasi.
 | `/admin/pesanan` | Daftar & detail pesanan, ubah status/resi, link sumber marketplace |
 | `/admin/produk` | Tambah/edit produk, upload foto & file ebook langsung, harga modal |
 | `/admin/kategori` | Tambah, ubah, hapus kategori |
-| `/admin/pengaturan` | Nomor WhatsApp, rekening, gambar QRIS, ongkir flat, kebijakan toko |
+| `/admin/pengaturan` | Nomor WhatsApp, rekening, gambar QRIS, kebijakan toko |
 
 Lainnya: `sitemap.xml`, `robots.txt`, metadata SEO per halaman, Meta Pixel
 (PageView, ViewContent, AddToCart, InitiateCheckout, Purchase).
@@ -87,7 +87,7 @@ Nomor WhatsApp, rekening, QRIS, ongkir, dan kebijakan toko diisi dari `/admin/pe
    Untuk ebook, tombol **Unduh** otomatis muncul di halaman pesanan pembeli.
 3. **Barang fisik:** klik *Pesan di marketplace ↗* di detail pesanan, pesankan dengan alamat pembeli,
    lalu isi nomor resi & ubah status ke *Dikirim*.
-4. **COD:** status awal *Menunggu konfirmasi*; konfirmasi ke pembeli via WA, lalu proses seperti barang fisik.
+4. **Ongkir barang fisik:** pesanan berisi barang fisik masuk sebagai *Menunggu ongkir*. Cek ongkir ke alamat pembeli di pemasok, isi di admin (atau `/akbar ongkir KODE ANGKA`), lalu kirim total ke pembeli lewat tombol WhatsApp. Status pindah ke *Menunggu pembayaran*.
 
 ### Masuk admin
 - Buka `/admin` atau tautan **Masuk admin** di footer toko.

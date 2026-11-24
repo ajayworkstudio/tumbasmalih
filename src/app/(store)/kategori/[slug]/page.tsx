@@ -13,7 +13,7 @@ export async function generateMetadata({ params }: PageProps<"/kategori/[slug]">
   if (!category) return { title: "Kategori tidak ditemukan" };
   return {
     title: category.name,
-    description: `${category.name} pilihan di tumbasmalih. Bayar pakai QRIS, transfer bank, atau COD untuk barang fisik.`,
+    description: `${category.name} pilihan di tumbasmalih. Bayar pakai QRIS atau transfer bank.`,
     alternates: { canonical: `/kategori/${category.slug}` },
   };
 }

@@ -2,6 +2,7 @@ import "server-only";
 import { paymentLabels, site, statusLabels, waLink } from "@/lib/site";
 import { monthStartWIB, todayStartWIB, hoursAgo } from "@/lib/time";
 import type { Order, OrderStatus } from "@/lib/types";
+import { parseFee, setShippingFee, shippingQuoteLink } from "@/lib/shipping";
 import { esc, type Reply } from "./api";
 import { logAction } from "./log";
 import { PAID, adminUrl, db, findOrder, normCode, orderLine, rp } from "./shared";
@@ -12,6 +13,7 @@ export const akbarHelp = [
   `<b>${NAME}</b>, mengurus pesanan dan pembayaran.`,
   "<code>/akbar</code> ringkasan pesanan yang perlu tindakan",
   "<code>/akbar cek KODE</code> detail satu pesanan",
+  "<code>/akbar ongkir KODE ANGKA</code> isi ongkir dari pemasok, lalu kirim total ke pembeli",
   "<code>/akbar bayar KODE</code> tandai sudah dibayar (ada konfirmasi)",
   "<code>/akbar kirim KODE RESI</code> catat resi, status jadi Dikirim",
   "<code>/akbar selesai KODE</code> status jadi Selesai",
@@ -36,7 +38,7 @@ async function summary(): Promise<Reply> {
   const count = (s: OrderStatus) => orders.filter((o) => o.status === s).length;
   const lines = [
     `<b>${NAME}</b>: ${orders.length} pesanan perlu tindakan`,
-    `Menunggu bayar: ${count("menunggu_pembayaran")} · COD perlu konfirmasi: ${count("menunggu_konfirmasi")} · Perlu dipesankan/dikirim: ${count("dibayar") + count("diproses")}`,
+    `Perlu ongkir: ${count("menunggu_konfirmasi")} · Menunggu bayar: ${count("menunggu_pembayaran")} · Perlu dipesankan/dikirim: ${count("dibayar") + count("diproses")}`,
     "",
     ...orders.slice(0, 12).map((o) => `• ${orderLine(o)}`),
   ];
@@ -65,11 +67,16 @@ async function detail(code: string): Promise<Reply> {
     ...(order.note ? [`Catatan: ${esc(order.note)}`] : []),
   ];
   const buttons: Reply["buttons"] = [];
-  if (order.status === "menunggu_pembayaran" || order.status === "menunggu_konfirmasi") {
+  if (order.status === "menunggu_konfirmasi") {
+    lines.push("", `Cek ongkir di pemasok, lalu ketik <code>/akbar ongkir ${esc(order.code)} ANGKA</code>.`);
+    buttons.push([{ text: "Batalkan", data: `ak:cancel:${order.code}` }]);
+  }
+  if (order.status === "menunggu_pembayaran") {
     buttons.push([
-      { text: order.status === "menunggu_konfirmasi" ? "Konfirmasi COD (diproses)" : "Tandai dibayar", data: order.status === "menunggu_konfirmasi" ? `ak:cod:${order.code}` : `ak:pay:${order.code}` },
+      { text: "Tandai dibayar", data: `ak:pay:${order.code}` },
       { text: "Batalkan", data: `ak:cancel:${order.code}` },
     ]);
+    if (order.shipping_fee > 0) buttons.push([{ text: "Kirim ulang total ke pembeli", url: shippingQuoteLink(order) }]);
   }
   buttons.push([
     { text: "Chat pembeli", url: `https://wa.me/${order.phone}?text=${encodeURIComponent(`Halo ${order.customer_name}, ini admin ${site.name} soal pesanan ${order.code}.`)}` },
@@ -168,9 +175,30 @@ export async function akbarCommand(args: string[], actor: string): Promise<Reply
       const code = normCode(a1);
       const order = await findOrder(code);
       if (!order) return { text: `Pesanan <b>${esc(code || "(kosong)")}</b> tidak ditemukan.` };
+      if (order.status === "menunggu_konfirmasi") {
+        return { text: `Ongkir <b>${esc(code)}</b> belum diisi. Isi dulu: <code>/akbar ongkir ${esc(code)} ANGKA</code>` };
+      }
       return {
         text: `Tandai <b>${esc(code)}</b> (${rp(order.total)}, ${esc(order.customer_name)}) sudah dibayar? Pastikan uangnya sudah masuk ke rekening/QRIS.`,
         buttons: [[{ text: "Ya, tandai dibayar", data: `ak:payok:${code}` }, { text: "Jangan", data: `ak:no:${code}` }]],
+      };
+    }
+    case "ongkir": {
+      const code = normCode(a1);
+      const fee = parseFee(rest.join(""));
+      if (!a1 || fee === null) {
+        return { text: "Format: <code>/akbar ongkir KODE ANGKA</code>, contoh <code>/akbar ongkir TM7K2QXPRA 11900</code>" };
+      }
+      const result = await setShippingFee({ code }, fee);
+      if ("error" in result) return { text: `${NAME}: ${esc(result.error)}` };
+      const o = result.order;
+      await logAction("akbar", actor, `${code} ongkir ${fee}`, "menunggu_pembayaran");
+      return {
+        text: [
+          `${NAME}: ongkir <b>${esc(code)}</b> ${rp(fee)}. Total sekarang <b>${rp(o.total)}</b>, status Menunggu pembayaran.`,
+          "Tekan tombol di bawah untuk mengirim total dan link pembayaran ke pembeli.",
+        ].join("\n"),
+        buttons: [[{ text: `Kirim total ke ${o.customer_name}`, url: shippingQuoteLink(o) }]],
       };
     }
     case "kirim": {
@@ -206,8 +234,6 @@ export async function akbarCallback(action: string, arg: string, actor: string):
       return akbarCommand(["bayar", arg], actor);
     case "payok":
       return setStatus(arg, "dibayar", actor);
-    case "cod":
-      return setStatus(arg, "diproses", actor);
     case "cancel":
       return akbarCommand(["batal", arg], actor);
     case "cancelok":
@@ -226,19 +252,23 @@ export async function newOrderMessage(code: string): Promise<Reply | null> {
   const order = await findOrder(code);
   if (!order) return null;
   const items = order.items.map((it) => `• ${esc(it.name)} x${it.qty}`).join("\n");
+  const needsFee = order.status === "menunggu_konfirmasi";
   return {
     text: [
       `<b>${NAME}</b>: pesanan baru <b>${esc(order.code)}</b>`,
-      `${esc(order.customer_name)} · ${rp(order.total)} · ${esc(paymentLabels[order.payment_method])}`,
+      `${esc(order.customer_name)} · ${rp(order.total)}${needsFee ? " (belum ongkir)" : ""} · ${esc(paymentLabels[order.payment_method])}`,
       items,
-      order.payment_method === "cod" ? "COD: hubungi pembeli untuk konfirmasi sebelum diproses." : "Tunggu bukti bayar dari pembeli lewat WhatsApp.",
+      ...(needsFee
+        ? [
+            `Kirim ke: ${esc(order.city ?? "")} ${esc(order.postal_code ?? "")}`,
+            `Cek ongkir di pemasok, lalu ketik <code>/akbar ongkir ${esc(order.code)} ANGKA</code>.`,
+          ]
+        : ["Tunggu bukti bayar dari pembeli lewat WhatsApp."]),
     ].join("\n"),
     buttons: [
       [
-        order.payment_method === "cod"
-          ? { text: "Konfirmasi COD", data: `ak:cod:${order.code}` }
-          : { text: "Tandai dibayar", data: `ak:pay:${order.code}` },
-        { text: "Detail", data: `ak:detail:${order.code}` },
+        needsFee ? { text: "Detail + alamat", data: `ak:detail:${order.code}` } : { text: "Tandai dibayar", data: `ak:pay:${order.code}` },
+        ...(needsFee ? [] : [{ text: "Detail", data: `ak:detail:${order.code}` }]),
       ],
       [{ text: "Chat pembeli", url: waLink(`Halo ${order.customer_name}, terima kasih sudah pesan ${order.code} di ${site.name}.`, order.phone) }],
     ],

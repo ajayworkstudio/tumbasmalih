@@ -23,18 +23,17 @@ export function SettingsForm({ settings }: { settings: Settings }) {
       className="flex flex-col gap-5"
     >
       <section aria-labelledby="kontak-title" className="flex flex-col gap-4 rounded-2xl border border-line bg-white p-5">
-        <h2 id="kontak-title" className="font-bold">Kontak dan ongkir</h2>
+        <h2 id="kontak-title" className="font-bold">Kontak</h2>
         <div className="grid gap-4 sm:grid-cols-2">
           <label className={label}>
             Nomor WhatsApp admin
             <input name="whatsapp" type="tel" inputMode="tel" defaultValue={settings.whatsapp} placeholder="081234567890" className={field} />
             <span className={hint}>Dipakai di tombol WhatsApp toko dan halaman pesanan.</span>
           </label>
-          <label className={label}>
-            Ongkir flat (Rp)
-            <input name="shipping_flat" inputMode="numeric" required defaultValue={settings.shippingFlat} className={field} />
-            <span className={hint}>Ditambahkan sekali per pesanan yang berisi barang fisik.</span>
-          </label>
+          <p className={hint}>
+            Ongkir barang fisik diisi per pesanan, sesuai harga di pemasok: buka pesanan berstatus Menunggu ongkir, atau ketik
+            /akbar ongkir KODE ANGKA di Telegram.
+          </p>
         </div>
       </section>
 

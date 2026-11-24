@@ -5,6 +5,7 @@ import { updateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireAdmin } from "@/lib/auth";
 import { normalizePhone, slugify } from "@/lib/format";
+import { parseFee, setShippingFee } from "@/lib/shipping";
 import { statusOrder } from "@/lib/site";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { hasSupabaseEnv } from "@/lib/supabase/env";
@@ -53,6 +54,19 @@ export async function updateOrder(formData: FormData) {
   redirect(`/admin/pesanan/${id}?disimpan=1`);
 }
 
+export async function setOrderShipping(formData: FormData) {
+  await requireAdmin();
+  const id = text(formData, "id", 40);
+  const fee = parseFee(text(formData, "shipping_fee", 20));
+  if (!id) return;
+  if (fee === null) redirect(`/admin/pesanan/${id}?ongkir=invalid`);
+  const result = await setShippingFee({ id }, fee);
+  if ("error" in result) {
+    console.error("setOrderShipping:", result.error);
+    redirect(`/admin/pesanan/${id}?ongkir=gagal`);
+  }
+  redirect(`/admin/pesanan/${id}?ongkir=1`);
+}
 
 export type ProductFormState = { error?: string; values?: Record<string, string> };
 
@@ -129,9 +143,6 @@ export async function saveSettings(_prev: FormState, formData: FormData): Promis
   const whatsapp = normalizePhone(whatsappRaw);
   if (whatsappRaw && !whatsapp) return { error: "Nomor WhatsApp tidak valid. Contoh: 081234567890." };
 
-  const shipping = intOrNull(formData, "shipping_flat");
-  if (shipping === null || shipping === "invalid") return { error: "Ongkir flat wajib angka bulat (contoh: 15000)." };
-
   const banks = [0, 1, 2]
     .map((i) => ({
       bank: text(formData, `bank_${i}`, 40),
@@ -150,7 +161,6 @@ export async function saveSettings(_prev: FormState, formData: FormData): Promis
       whatsapp: whatsapp ?? "",
       bank_accounts: banks,
       qris_image_url: text(formData, "qris_image_url", 500),
-      shipping_flat: shipping,
       policy_shipping: text(formData, "policy_shipping", 500),
       policy_returns: text(formData, "policy_returns", 1500),
       policy_ebook: text(formData, "policy_ebook", 1000),

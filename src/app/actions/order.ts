@@ -4,7 +4,6 @@ import { randomInt } from "node:crypto";
 import { redirect } from "next/navigation";
 import { after } from "next/server";
 import { normalizePhone } from "@/lib/format";
-import { getSettings } from "@/lib/settings";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { PaymentMethod, ProductType } from "@/lib/types";
 
@@ -95,7 +94,6 @@ export async function createOrder(_prev: CheckoutState, formData: FormData): Pro
   }
 
   const hasPhysical = lines.some((l) => l.type === "fisik");
-  const allPhysical = lines.every((l) => l.type === "fisik");
 
   const fieldErrors: CheckoutState["fieldErrors"] = {};
   if (name.length < 2) fieldErrors.name = "Isi nama lengkap.";
@@ -107,12 +105,12 @@ export async function createOrder(_prev: CheckoutState, formData: FormData): Pro
     if (city.length < 3) fieldErrors.city = "Isi kota/kabupaten.";
     if (!/^\d{5}$/.test(postalCode)) fieldErrors.postal_code = "Kode pos 5 angka.";
   }
-  if (!["qris", "transfer", "cod"].includes(payment)) fieldErrors.payment = "Pilih metode pembayaran.";
-  if (payment === "cod" && !allPhysical) fieldErrors.payment = "COD hanya untuk pesanan yang semuanya barang fisik.";
+  if (!["qris", "transfer"].includes(payment)) fieldErrors.payment = "Pilih metode pembayaran.";
   if (Object.keys(fieldErrors).length > 0) return { fieldErrors, values };
 
   const subtotal = lines.reduce((n, l) => n + l.line_total, 0);
-  const shippingFee = hasPhysical ? (await getSettings()).shippingFlat : 0;
+  // Ongkir barang fisik dihitung admin dari harga di pemasok, lalu diisi lewat admin atau /akbar ongkir.
+  // Sampai saat itu pesanan berstatus menunggu_konfirmasi (tampil sebagai "Menunggu ongkir").
 
   let orderId: string | null = null;
   let code = "";
@@ -130,10 +128,10 @@ export async function createOrder(_prev: CheckoutState, formData: FormData): Pro
         postal_code: hasPhysical ? postalCode : null,
         note: note || null,
         payment_method: payment,
-        status: payment === "cod" ? "menunggu_konfirmasi" : "menunggu_pembayaran",
+        status: hasPhysical ? "menunggu_konfirmasi" : "menunggu_pembayaran",
         subtotal,
-        shipping_fee: shippingFee,
-        total: subtotal + shippingFee,
+        shipping_fee: 0,
+        total: subtotal,
       })
       .select("id")
       .single();
